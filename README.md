@@ -49,7 +49,7 @@ La API estará disponible en `http://localhost:8000`
 ## Ejecutar tests
 
 ```bash
-python test_api.py
+python api.tests.test_api.py
 ```
 
 ## Documentación interactiva
