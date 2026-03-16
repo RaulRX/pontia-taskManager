@@ -21,7 +21,7 @@ class Repository(IRepository):
     
     def save_note(self, note: Note) -> None:
         db = self._db_config.get_session()
-        exists_note = self.__exists_by_criteria(db, Note.title == note.title, Note.completed == False, Note.deadline_date == None)
+        exists_note = self.__exists_by_criteria(db, Note.title == note.title, Note.deadline_date == None)
 
         if exists_note:
             raise NoteAlreadyExistsException(note.title)
