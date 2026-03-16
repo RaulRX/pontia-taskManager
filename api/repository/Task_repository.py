@@ -61,7 +61,7 @@ class Repository(Base_repository):
 
         return True
         
-    def get_expired_notes(self) -> list:
+    def get_expired_notes(self) -> List:
         #TODO
         pass
 
