@@ -14,7 +14,7 @@ class Note:
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, index=True)
     title: Mapped[str] = mapped_column(String(16), nullable= False)
     content: Mapped[str] = mapped_column(String(255), nullable=True)
-    completed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), nullable = False)
     updated_date: Mapped[datetime] = mapped_column(DateTime, default=None, onupdate=datetime.now())
     deadline_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)

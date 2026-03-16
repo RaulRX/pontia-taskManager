@@ -2,27 +2,26 @@ import logging
 
 from sqlalchemy.exc import MultipleResultsFound
 
+from .INote_repository import IRepository
 from api.repository.config.Configuration import Initializer
 from .model.Note import Note
 from .exception.Exceptions import NoteAlreadyExistsException, NoteNotFoundException, DuplicatedNoteException
 from sqlalchemy import exists, select
+from datetime import datetime
+from .model.Note import Base
 
-class Base_repository:
-
-    def __init__(self, db_config: Initializer):
-        self.__db_config = db_config
-
-class Repository(Base_repository):
+class Repository(IRepository):
 
     logger = logging.getLogger("task_repository")
 
     def __init__(self, configuration: Initializer):
         super().__init__(configuration)
+        configuration.create_tables(Base)
 
     
     def save_note(self, note: Note) -> None:
-        db = self.__db_config.get_session()
-        exists_note = self.__exists_by_criteria(Note.title == note.title, Note.completed == False, Note.deadline_date == None)
+        db = self._db_config.get_session()
+        exists_note = self.__exists_by_criteria(db, Note.title == note.title, Note.completed == False, Note.deadline_date == None)
 
         if exists_note:
             raise NoteAlreadyExistsException(note.title)
@@ -33,8 +32,8 @@ class Repository(Base_repository):
         db.close()
 
     def get_by_id(self, id: int) -> Note:
-        db = self.__db_config.get_session()
-        exists_note = self.__exists_by_criteria(Note.id == id)
+        db = self._db_config.get_session()
+        exists_note = self.__exists_by_criteria(db, Note.id == id)
 
         if not exists_note:
             raise NoteNotFoundException(id)
@@ -49,7 +48,7 @@ class Repository(Base_repository):
             raise DuplicatedNoteException(id)
 
     def set_completed(self, id: int) -> bool:
-        db = self.__db_config.get_session()
+        db = self._db_config.get_session()
 
         note = self.get_by_id(id)
         note.completed = True
@@ -61,15 +60,27 @@ class Repository(Base_repository):
 
         return True
         
-    def get_expired_notes(self) -> List:
-        #TODO
-        pass
+    def get_expired_notes(self) -> list:
+        db = self._db_config.get_session()
+        return db.query(Note).filter(Note.completed == True or 
+                                        Note.deadline_date < datetime.now()).all()
 
     def modify(self, note: Note) -> None:
-        # TODO
-        pass
+        db = self._db_config.get_session()
 
-    def __exists_by_criteria(self, *criteria) -> bool | None:
-        db = self.__db_config.get_session()
+        current_note = db.query(Note).filter_by(Note.id == note.id).one_or_none()
+        if current_note is None:
+            raise NoteNotFoundException(f"Note with id {note.id} not found")
+        
+        updatable_fields = ['title', 'content', 'completed', 'deadline_date', 'updated_date']
+
+        for field in updatable_fields:
+            if hasattr(note, field):
+                setattr(current_note, field, getattr(note, field))
+        
+        db.commit()
+        db.close()
+
+    def __exists_by_criteria(self, db, *criteria) -> bool | None:
         return db.scalar(select(exists().where(*criteria)))
 

@@ -3,7 +3,13 @@ from pydantic import BaseModel, Field
 from datetime import datetime, date
 from typing import List
 
+from api.repository.config.Configuration import Initializer
+from api.repository.Note_repository_impl import Repository
+
 app = FastAPI(title="Task Management API", version="1.0.0")
+
+# Inicializar base de datos y repositorio
+notes_repo = Repository(Initializer("notes.db"))
 
 # Modelos Pydantic
 class TaskCreate(BaseModel):
