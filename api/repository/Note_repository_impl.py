@@ -50,8 +50,12 @@ class Repository(IRepository):
     def set_completed(self, id: int) -> bool:
         db = self._db_config.get_session()
 
-        note = self.get_by_id(id)
-        note.completed = True
+        exists_note = self.__exists_by_criteria(db, Note.id == id)
+        if not exists_note:
+            raise NoteNotFoundException(id)
+        
+        note = db.query(Note).filter_by(id = id).one()
+        note.deadline_date = datetime.now()
 
         db.add(note)
         db.commit()
@@ -62,15 +66,14 @@ class Repository(IRepository):
         
     def get_expired_notes(self) -> list:
         db = self._db_config.get_session()
-        return db.query(Note).filter(Note.completed == True or 
-                                        Note.deadline_date < datetime.now()).all()
+        return db.query(Note).filter(Note.deadline_date < datetime.now()).all()
 
     def modify(self, note: Note) -> None:
         db = self._db_config.get_session()
 
-        current_note = db.query(Note).filter_by(Note.id == note.id).one_or_none()
+        current_note = db.query(Note).filter_by(id = note.id).one_or_none()
         if current_note is None:
-            raise NoteNotFoundException(f"Note with id {note.id} not found")
+            raise NoteNotFoundException(note.id)
         
         updatable_fields = ['title', 'content', 'completed', 'deadline_date', 'updated_date']
 
