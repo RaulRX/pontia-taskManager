@@ -62,9 +62,9 @@ def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
         summary="Add content to note. I returns space left to write",
         operation_id="modify_note_content",
         response_description="Espacio restante para escribir en la nota")
-def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int:
+def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None:
     note_model = content_to_modify.to_model(id)
-    return note_service.modify_note(note_model)
+    return note_service.write_content(note_model.id, note_model.content)
 
 @router.patch(path="/{id}/completed",
         status_code=status.HTTP_204_NO_CONTENT,

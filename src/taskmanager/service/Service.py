@@ -45,9 +45,9 @@ class Note_service:
         note_modified = self.__repository.modify(Mapper.toEntity(note))
         return Mapper.toModel(note_modified)
 
-    def write_content(self, id: int, new_content: str) -> int | None:
+    def write_content(self, id: int, new_content: str | None) -> int | None:
         try:
-            if Note_validation._MAX_LENGTH_CONTENT < len(new_content):
+            if new_content is not None and Note_validation._MAX_LENGTH_CONTENT < len(new_content):
                 self.logger.error("New content length is greater than maximum allowed space")
                 raise TextOverflowException("New content length is greater than maximum allowed space")
 
@@ -80,8 +80,7 @@ class Note_service:
 
     def close_note(self, note_to_complete: Note) -> bool:
         try:
-            entity_to_modify = Mapper.toModel(note_to_complete)
-            self.__repository.set_completed(entity_to_modify)
+            self.__repository.set_completed(note_to_complete.id, note_to_complete.completed)
             return True
         except NoteNotFoundException as ex:
             self.logger.error(f"Note to complete with id {note_to_complete.id} not found")
