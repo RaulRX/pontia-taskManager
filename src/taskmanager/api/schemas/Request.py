@@ -32,6 +32,12 @@ class TaskCreate(BaseModel):
 class TaskComplete(BaseModel):
     completed: bool = Field(..., description="Estado de completado")
 
+    def to_model(self, id: int | None = None) -> Note:
+        return Note(
+            id = self.id,
+            completed=self.completed
+        )
+
 class TaskWriteNote(BaseModel):
     content: str = Field(..., description="Estado de completado", min_length=1, max_length=255)
 

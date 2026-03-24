@@ -11,7 +11,7 @@ from datetime import datetime
 
 class Repository(IRepository):
 
-    logger = logging.getLogger("task_repository")
+    logger = logging.getLogger("note_repository")
 
     def __init__(self, configuration: Initializer):
         super().__init__(configuration)
@@ -23,7 +23,6 @@ class Repository(IRepository):
 
         db.add(note)
         db.commit()
-        db.refresh(note)
         db.close()
 
     def get_by_id(self, id: int) -> Note_entity:
@@ -31,15 +30,16 @@ class Repository(IRepository):
         exists_note = self.__exists_by_criteria(db, Note_entity.id == id)
 
         if not exists_note:
+            self.logger.error(f"Note with id {id} not found")
             raise NoteNotFoundException(id)
 
         try:
             row = db.query(Note_entity).filter_by(id = id).one()
+            db.refresh(row)
             db.close()
-
             return row
-
         except MultipleResultsFound:
+            self.logger.error(f"Duplicated note with id {id}")
             raise DuplicatedNoteException(id)
         
     def exists_by_id(self, id: int | None) -> bool:
@@ -54,21 +54,19 @@ class Repository(IRepository):
         db = self._db_config.get_session()
         return db.query(Note_entity).all()
 
-    def set_completed(self, id: int) -> bool:
+    def set_completed(self, note: Note_entity) -> bool:
         db = self._db_config.get_session()
-
-        exists_note = self.__exists_by_criteria(db, Note_entity.id == id)
+        exists_note = self.__exists_by_criteria(db, Note_entity.id == note.id)
         if not exists_note:
+            self.logger.error(f"Note with id {note.id} not found")
             raise NoteNotFoundException(id)
 
         note = db.query(Note_entity).filter_by(id = id).one()
-        note.completed = True
-
+        note.completed = note.completed
+        note.deadline_date = datetime.now() if note.completed is True else None
         db.add(note)
         db.commit()
-        db.refresh(note)
         db.close()
-
         return True
 
     def get_expired_notes(self) -> list:
@@ -77,15 +75,15 @@ class Repository(IRepository):
 
     def modify(self, note: Note_entity) -> Note_entity:
         db = self._db_config.get_session()
-
         current_note = db.query(Note_entity).filter_by(id = note.id).one_or_none()
         if current_note is None:
+            self.logger.error(f"Note with id {note.id} not found")
             raise NoteNotFoundException(note.id)
 
         if note.title is not None:
             current_note.title = note.title
         if note.content is not None:
-            current_note.content += note.content
+            current_note.content = note.content
         if note.completed is not None:
             current_note.completed = note.completed
         if note.deadline_date is not None:
@@ -94,7 +92,6 @@ class Repository(IRepository):
         db.commit()
         db.refresh(current_note)
         db.close()
-
         return current_note
 
     def remove(self, id: int) -> bool:
