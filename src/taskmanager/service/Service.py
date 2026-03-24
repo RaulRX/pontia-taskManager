@@ -1,4 +1,4 @@
-from src.taskmanager.repository.Repository_exception import DuplicatedNoteException, NoteAlreadyExistsException, NoteNotFoundException
+from src.taskmanager.repository.Repository_exception import DuplicatedNoteException, NoteNotFoundException
 from src.taskmanager.service.Note_mapper import Mapper
 from src.taskmanager.domain.Model import Note
 from src.taskmanager.service.Utils import Note_validation
@@ -15,13 +15,9 @@ class Note_service:
         self.__repository = repository
 
     def save_note(self, note: Note) -> None:
-        try:
-            note.sanitize()
-            note_entity = Mapper.toEntity(note)
-            self.__repository.save_note(note_entity)
-
-        except NoteAlreadyExistsException as ex:
-            raise DuplicationException(ex) from ex
+        note.sanitize()
+        note_entity = Mapper.toEntity(note)
+        self.__repository.save_note(note_entity)
 
     def get_note(self, id: int) -> Note:
         try:
@@ -30,18 +26,24 @@ class Note_service:
 
         except NoteNotFoundException as ex:
             raise NotFoundException(ex) from ex
+    
+    def get_all_note(self) -> list[Note]:
+        note_list = self.__repository.get_all()
+        return [Mapper.toModel(n_entity) for n_entity in note_list]
 
-    def modify_note(self, note: Note) -> None:
+    def modify_note(self, note: Note) -> Note:
         
-        if not self.__repository.exists_by_id(note.__id):
-            raise NotFoundException(NoteNotFoundException(note.__id))
+        if not self.__repository.exists_by_id(note.id):
+            raise NotFoundException(NoteNotFoundException(note.id))
 
-        current_note = Mapper.toModel(self.__repository.get_by_id(note.__id))
-        valid, field_list = self.__valid_note_to_modify(current_note, note)
+        current_note = Mapper.toModel(self.__repository.get_by_id(note.id))
+        valid, field, reason = self.__valid_note_to_modify(current_note, note)
         if not valid:
-            raise BadNoteException(f"Note {note.__id} is not valid. Invalid fields: {str(field_list)}")
+            raise BadNoteException(f"Note {note.id} is not valid. Invalid field: {field}. Reason: {reason}")
 
-        self.__repository.modify(Mapper.toEntity(note))    
+        note_modified = self.__repository.modify(Mapper.toEntity(note))
+
+        return Mapper.toModel(note_modified)
 
     def write_content(self, id: int, new_content: str) -> int | None:
         try:
@@ -100,20 +102,28 @@ class Note_service:
     def remove_all(self) -> bool:
         return self.__repository.remove_all()
     
-    def __valid_note_to_modify(self, current_note: Note, note_to_modify: Note) -> tuple[bool, list[str]]:
-        invalid_fields = []
+    def __valid_note_to_modify(self, current_note: Note, note_to_modify: Note) -> tuple[bool, str, str]:
+        invalid_field = ""
+        reason = ""
+        valid = True
 
-        if not Note_validation.is_integer_value(note_to_modify.__id):
-            invalid_fields.append("id")
+        if not Note_validation.is_integer_value(note_to_modify.id):
+            valid = False
+            invalid_field = "id"
+            reason = "invalid type"
 
-        if note_to_modify.__deadline_date is not None:
-            if not Note_validation.valid_date(note_to_modify.__deadline_date):
-                invalid_fields.append("deadline_date")
+        if (note_to_modify.deadline_date is not None and
+                not Note_validation.valid_date(note_to_modify.deadline_date)):
+                valid = False
+                invalid_field = "deadline_date"
+                reason = "Invalid date format"
 
-        if not Note_validation.is_note_writtable(current_note.__content, note_to_modify.__content):
-            invalid_fields.append("content")
+        if not Note_validation.is_note_writtable(current_note.content, note_to_modify.content):
+            valid = False
+            invalid_field = "content"
+            reason = "No space left to write"
 
-        return (len(invalid_fields) == 0, invalid_fields)
+        return (valid, invalid_field, reason)
 
 
 

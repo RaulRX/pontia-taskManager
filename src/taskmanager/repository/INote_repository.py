@@ -35,7 +35,7 @@ class IRepository(ABC, Base_repository):
         raise NotImplementedError("Interface method 'get_expired_notes' must be implemented by another class")
 
     @abstractmethod
-    def modify(self, note: Note_entity) -> None:
+    def modify(self, note: Note_entity) -> Note_entity:
         raise NotImplementedError("Interface method 'modify' must be implemented by another class")
 
     @abstractmethod

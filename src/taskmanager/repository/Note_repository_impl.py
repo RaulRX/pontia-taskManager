@@ -5,7 +5,7 @@ from sqlalchemy.exc import MultipleResultsFound
 from src.taskmanager.repository.INote_repository import IRepository
 from src.taskmanager.infrastructure.Configuration import Initializer
 from src.taskmanager.infrastructure.Entity import Note_entity, Base
-from src.taskmanager.repository.Repository_exception import NoteAlreadyExistsException, NoteNotFoundException, DuplicatedNoteException
+from src.taskmanager.repository.Repository_exception import NoteNotFoundException, DuplicatedNoteException
 from sqlalchemy import exists, select
 from datetime import datetime
 
@@ -20,10 +20,6 @@ class Repository(IRepository):
 
     def save_note(self, note: Note_entity) -> None:
         db = self._db_config.get_session()
-        exists_note = self.__exists_by_criteria(db, Note_entity.title == note.title, Note_entity.deadline_date == None)
-
-        if exists_note:
-            raise NoteAlreadyExistsException(note.title)
 
         db.add(note)
         db.commit()
@@ -79,7 +75,7 @@ class Repository(IRepository):
         db = self._db_config.get_session()
         return db.query(Note_entity).filter(Note_entity.deadline_date < datetime.now()).all()
 
-    def modify(self, note: Note_entity) -> None:
+    def modify(self, note: Note_entity) -> Note_entity:
         db = self._db_config.get_session()
 
         current_note = db.query(Note_entity).filter_by(id = note.id).one_or_none()
@@ -89,14 +85,17 @@ class Repository(IRepository):
         if note.title is not None:
             current_note.title = note.title
         if note.content is not None:
-            current_note.content = note.content
+            current_note.content += note.content
         if note.completed is not None:
             current_note.completed = note.completed
         if note.deadline_date is not None:
             current_note.deadline_date = note.deadline_date
 
         db.commit()
+        db.refresh(current_note)
         db.close()
+
+        return current_note
 
     def remove(self, id: int) -> bool:
         db = self._db_config.get_session()
@@ -107,7 +106,7 @@ class Repository(IRepository):
             return False
         
         else:
-            db.query(Note_entity).filter(Note_entity.id== id).delete(synchronize_session=False)
+            db.query(Note_entity).filter_by(id = id).delete(synchronize_session=False)
             db.commit()
             db.close()
 
@@ -123,6 +122,9 @@ class Repository(IRepository):
         note_list = db.query(Note_entity).all()
         for note in note_list:
             db.query(Note_entity).filter_by(id = note.id).delete(synchronize_session=False)
+        
+        db.commit()
+        db.close()
 
         return True
         

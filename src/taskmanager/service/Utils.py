@@ -5,9 +5,12 @@ class Note_validation:
     _MAX_LENGTH_CONTENT = 255
 
     @staticmethod
-    def is_note_writtable(current_content: str, additional_content: str) -> bool:
+    def is_note_writtable(current_content: str | None, additional_content: str | None) -> bool:
+        if current_content is None or additional_content is None:
+            return True
+        
         content_space_left = Note_validation._MAX_LENGTH_CONTENT - len(current_content)
-        return True if content_space_left < len(additional_content) else False
+        return True if content_space_left >= len(additional_content) else False
 
     @staticmethod
     def is_integer_value(value) -> bool:

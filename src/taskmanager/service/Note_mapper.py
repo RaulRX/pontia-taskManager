@@ -5,25 +5,36 @@ from datetime import datetime
 class Mapper:
 
     @staticmethod
+    def _parse_date(value: str | None) -> datetime | None:
+        return datetime.fromisoformat(value) if value else None
+
+    @staticmethod
     def toEntity(note: Note) -> Note_entity:
-        return Note_entity(
-            id = note.__id,
-            title = note.__title,
-            content = note.__content,
-            completed = note.__completed,
-            created_date = note.__created_date,
-            updated_date = note.__updated_date,
-            deadline_date = note.__deadline_date
+        entity = Note_entity(
+            id = note.id,
+            title = note.title,
+            content = note.content,
+            completed = note.completed,
+            deadline_date = Mapper._parse_date(note.deadline_date),
         )
+        if note.created_date:
+            entity.created_date = datetime.fromisoformat(note.created_date)
+        if note.updated_date:
+            entity.updated_date = datetime.fromisoformat(note.updated_date)
+        return entity
+
+    @staticmethod
+    def _format_date(value: datetime | None) -> str | None:
+        return value.isoformat() if value is not None else None
 
     @staticmethod
     def toModel(entity: Note_entity) -> Note:
         return Note(
-            entity.title,
-            entity.content,
-            datetime.isoformat(entity.deadline_date),
-            entity.id,
-            datetime.isoformat(entity.created_date),
-            datetime.isoformat(entity.updated_date),
-            entity.completed
+            title = entity.title,
+            content = entity.content,
+            deadline_date = Mapper._format_date(entity.deadline_date),
+            id = entity.id,
+            created_date = Mapper._format_date(entity.created_date),
+            updated_date = Mapper._format_date(entity.updated_date),
+            completed = entity.completed,
         )

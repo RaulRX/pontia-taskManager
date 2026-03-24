@@ -1,11 +1,3 @@
-from types import UnionType
-
-
-class NoteAlreadyExistsException(Exception):
-
-    def __init__(self, title: str):
-         super().__init__(f"Active note with title {title} already exists")
-
 class NoteNotFoundException(Exception):
 
     def __init__(self, id: int | None):
