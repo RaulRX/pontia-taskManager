@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, field_validator, model_validator, Field
 
 from src.taskmanager.domain.Model import Note
 
@@ -31,6 +31,18 @@ class TaskCreate(BaseModel):
 
 class TaskComplete(BaseModel):
     completed: bool = Field(..., description="Estado de completado")
+
+    @model_validator(mode = "before")
+    def valid_bool_value(cls, request: dict):
+        if not isinstance(request["completed"], bool):
+            raise ValueError(f"Value must be a bool value")
+        return request
+
+    def to_model(self, id: int | None = None) -> Note:
+        return Note(
+            id = id,
+            completed=self.completed
+    )
 
 class TaskWriteNote(BaseModel):
     content: str = Field(..., description="Estado de completado", min_length=1, max_length=255)

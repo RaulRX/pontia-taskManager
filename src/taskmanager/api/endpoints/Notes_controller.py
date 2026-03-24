@@ -1,10 +1,6 @@
-from http import HTTPStatus
-from urllib import response
-
 from fastapi import Response, status
-from starlette.status import HTTP_200_OK
 from fastapi import APIRouter
-from src.taskmanager.api.schemas.Request import TaskCreate, TaskUpdate, TaskWriteNote
+from src.taskmanager.api.schemas.Request import TaskCreate, TaskComplete, TaskUpdate, TaskWriteNote
 from src.taskmanager.api.schemas.Response import NoteListResponse, NoteResponse
 from src.taskmanager.service.Service import Note_service
 from src.taskmanager.repository.Note_repository_impl import Repository
@@ -32,6 +28,15 @@ def get_all_notes() -> NoteListResponse:
     notes = note_service.get_all_note()
     return NoteListResponse.to_schema(notes)
 
+@router.get(path="/expirationNotes",
+        status_code=status.HTTP_200_OK,
+        summary="Get all notes that are expired",
+        operation_id="get_expired_notes",
+        response_model=NoteListResponse)
+def get_expired_notes() -> NoteListResponse:
+    notes = note_service.get_expired_notes()
+    return NoteListResponse.to_schema(notes)
+
 @router.get(path="/{id}",
         status_code=status.HTTP_200_OK,
         summary="Get note by id",
@@ -52,16 +57,23 @@ def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
 
     return NoteResponse.to_schema(note)
 
-@router.patch(path="/{id}",
+@router.patch(path="/{id}/content",
         status_code=status.HTTP_200_OK,
-        summary="Add content to note",
-        operation_id="modify_note_content")
-def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> NoteResponse:
+        summary="Add content to note. I returns space left to write",
+        operation_id="modify_note_content",
+        response_description="Espacio restante para escribir en la nota")
+def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None:
     note_model = content_to_modify.to_model(id)
-    note = note_service.modify_note(note_model)
+    return note_service.write_content(note_model.id, note_model.content)
 
-    return NoteResponse.to_schema(note)
-
+@router.patch(path="/{id}/completed",
+        status_code=status.HTTP_204_NO_CONTENT,
+        summary="Set note to completed",
+        operation_id="complete_note",
+        response_class=Response)
+def complete_note(id: int, content_to_modify: TaskComplete) -> None:
+    note_model = content_to_modify.to_model(id)
+    note_service.close_note(note_model)
 
 @router.delete(path="",
         status_code=status.HTTP_204_NO_CONTENT,

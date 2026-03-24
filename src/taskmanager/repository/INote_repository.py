@@ -27,7 +27,7 @@ class IRepository(ABC, Base_repository):
         raise NotImplementedError("Interface method 'exists_by_id' must be implemented by another class")
     
     @abstractmethod
-    def set_completed(self, id: int) -> bool:
+    def set_completed(self, id: int | None, completed: bool) -> bool:
         raise NotImplementedError("Interface method 'set_completed' must be implemented by another class")
 
     @abstractmethod
