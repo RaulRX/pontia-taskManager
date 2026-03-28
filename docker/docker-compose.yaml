@@ -1,0 +1,14 @@
+services:
+  postgres:
+    container_name: postgresDB
+    image: postgres:14.22-trixie
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    env_file:
+      - ../.env
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    
+volumes:
+  postgres_db:
