@@ -4,14 +4,42 @@ services:
     image: postgres:14.22-trixie
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - POSTGRES_USER: ${POSTGRES_USER}
+      - POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      - POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - net-taskmanager
     ports:
       - ${POSTGRES_PORT}:5432
     volumes:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_db:/var/lib/postgresql/data
+  
+  taskManager:
+    container_name: task-manager
+    image: taskmanager-app:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    build: 
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB_TABLE=${POSTGRES_DB_TABLE}
+    ports:
+      - ${APP_PORT}:8000
+    networks:
+      - net-taskmanager
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
     
 volumes:
   postgres_db:
+
+networks:
+  net-taskmanager:

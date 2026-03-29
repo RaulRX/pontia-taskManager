@@ -1,5 +1,6 @@
 from fastapi import Response, status
 from fastapi import APIRouter
+import os
 from src.taskmanager.repository.postgres.Note_repository_impl import Repository
 from src.taskmanager.api.schemas.Request import TaskCreate, TaskComplete, TaskUpdate, TaskWriteNote
 from src.taskmanager.api.schemas.Response import NoteListResponse, NoteResponse
@@ -7,7 +8,7 @@ from src.taskmanager.service.Service import Note_service
 from src.taskmanager.infrastructure.Configuration import Postgres_Initializer
 
 router = APIRouter()
-notes_repo = Repository(Postgres_Initializer("notes.db"))
+notes_repo = Repository(Postgres_Initializer(os.getenv("POSTGRES_DB_TABLE", "Notes")))
 note_service = Note_service(notes_repo)
 
 @router.post(path="",
