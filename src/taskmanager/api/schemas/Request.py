@@ -79,6 +79,7 @@ class TaskUpdate(BaseModel):
                raise ValueError("All values must be strings")
            request[key] = request[key].strip()
         return request
+        
 
     def to_model(self, id: int | None = None) -> Note:
         return Note(

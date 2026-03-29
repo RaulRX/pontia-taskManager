@@ -29,6 +29,7 @@ class Mapper:
 
     @staticmethod
     def toModel(entity: Note_entity) -> Note:
+        print(entity)
         return Note(
             title = entity.title,
             content = entity.content,

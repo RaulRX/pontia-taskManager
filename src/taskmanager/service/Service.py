@@ -29,21 +29,26 @@ class Note_service:
     
     def get_all_note(self) -> list[Note]:
         note_list = self.__repository.get_all()
+        
         return [Mapper.toModel(n_entity) for n_entity in note_list]
 
     def modify_note(self, note: Note) -> Note:
-        if not self.__repository.exists_by_id(note.id):
+        try:
+            if not self.__repository.exists_by_id(note.id):
+                self.logger.error(f"Note with id {note.id} not found")
+                raise NotFoundException(NoteNotFoundException(note.id))
+
+            current_note = Mapper.toModel(self.__repository.get_by_id(note.id))
+            valid, field, reason = self.__valid_note_to_modify(current_note, note)
+            if not valid:
+                self.logger.error(f"Note {note.id} is not valid. Invalid field: {field}. Reason: {reason}")
+                raise BadNoteException(f"Note {note.id} is not valid. Invalid field: {field}. Reason: {reason}")
+
+            note_modified = self.__repository.modify(Mapper.toEntity(note))
+            return Mapper.toModel(note_modified)
+        except NoteNotFoundException as ex:
             self.logger.error(f"Note with id {note.id} not found")
-            raise NotFoundException(NoteNotFoundException(note.id))
-
-        current_note = Mapper.toModel(self.__repository.get_by_id(note.id))
-        valid, field, reason = self.__valid_note_to_modify(current_note, note)
-        if not valid:
-            self.logger.error(f"Note {note.id} is not valid. Invalid field: {field}. Reason: {reason}")
-            raise BadNoteException(f"Note {note.id} is not valid. Invalid field: {field}. Reason: {reason}")
-
-        note_modified = self.__repository.modify(Mapper.toEntity(note))
-        return Mapper.toModel(note_modified)
+            raise NotFoundException(ex) from ex
 
     def write_content(self, id: int, new_content: str | None) -> int | None:
         try:

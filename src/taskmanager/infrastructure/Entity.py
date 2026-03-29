@@ -1,4 +1,5 @@
 from types import UnionType
+from typing import Tuple
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -22,3 +23,15 @@ class Note_entity(Base):
     __table_args__ = (
         Index("idx_note_completed", "completed"),
     )
+
+    @staticmethod
+    def transform_to_entity(tuple: Tuple):
+        return Note_entity(
+            id = tuple[0],
+            title = tuple[1],
+            content = tuple[2],
+            completed = tuple[3],
+            created_date = tuple[4],
+            updated_date = tuple[5],
+            deadline_date = tuple[6]
+        )

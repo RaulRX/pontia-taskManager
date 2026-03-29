@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from types import UnionType
+from src.taskmanager.infrastructure.Configuration import Db_initializer
 from src.taskmanager.infrastructure.Entity import Note_entity
-from src.taskmanager.infrastructure.Configuration import Initializer
-
+import logging
 class Base_repository:
 
-    def __init__(self, db_config: Initializer):
+    def __init__(self, db_config):
         self._db_config = db_config
 
 class IRepository(ABC, Base_repository):
+
+    logger = logging.getLogger("note_repository")
 
     @abstractmethod
     def save_note(self, note: Note_entity) -> None:
