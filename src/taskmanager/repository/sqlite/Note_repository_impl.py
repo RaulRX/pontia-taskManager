@@ -1,21 +1,16 @@
-import logging
-
-from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy import exists, select
 
 from src.taskmanager.repository.INote_repository import IRepository
-from src.taskmanager.infrastructure.Configuration import Initializer
-from src.taskmanager.infrastructure.Entity import Note_entity, Base
-from src.taskmanager.repository.Repository_exception import NoteNotFoundException, DuplicatedNoteException
-from sqlalchemy import exists, select
+from src.taskmanager.infrastructure.Configuration import Db_initializer, SqlLite_Initializer
+from src.taskmanager.infrastructure.Entity import Note_entity
+from src.taskmanager.repository.Repository_exception import NoteNotFoundException, DuplicatedNoteException, MultipleResultsFound
 from datetime import datetime
 
 class Repository(IRepository):
 
-    logger = logging.getLogger("note_repository")
-
-    def __init__(self, configuration: Initializer):
+    def __init__(self, configuration: Db_initializer):
         super().__init__(configuration)
-        configuration.create_tables(Base)
+        configuration.create_tables()
 
 
     def save_note(self, note: Note_entity) -> None:

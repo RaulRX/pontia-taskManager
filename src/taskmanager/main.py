@@ -1,3 +1,8 @@
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
+
 from fastapi import FastAPI
 import uvicorn
 from src.taskmanager.api.Routers import task_router
