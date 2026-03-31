@@ -114,7 +114,7 @@ class Note_service:
                 not Note_validation.valid_date(note_to_modify.deadline_date)):
                 valid = False
                 invalid_field = "deadline_date"
-                reason = "Invalid date format"
+                reason = "Past date or invalid date format"
 
         if not Note_validation.is_note_writtable(current_note.content, note_to_modify.content):
             valid = False
