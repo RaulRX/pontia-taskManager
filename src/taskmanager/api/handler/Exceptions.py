@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from src.taskmanager.service.Service_exception import BadNoteException, DuplicationException, NotFoundException, NonWritableException, TextOverflowException
 
 
@@ -37,6 +38,10 @@ def Exception_handler(app: FastAPI) -> None:
     async def value_error_handler(request: Request, exc: ValueError):
         return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))
 
+    @app.exception_handler(ValidationError)
+    async def validation_error_handler(request: Request, exc: ValueError):
+        return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))
+
     @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(request: Request, exc: RequestValidationError):
-        return _error_response(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
+    async def request_validation_error_handler(request: Request, exc: RequestValidationError):
+        return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))

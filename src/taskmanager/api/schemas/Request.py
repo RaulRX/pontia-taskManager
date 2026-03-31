@@ -70,7 +70,7 @@ class TaskUpdate(BaseModel):
                          description="Contenido de la nota")
     deadline: str = Field(..., examples=["2026-03-21", "2026-03-21T15:00:00"],
                           description="Fecha de vencimiento de la nota",
-                          pattern=r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$")
+                          pattern=r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?)?$")
 
     @model_validator(mode = "before")
     def remove_spaces(cls, request: dict):
