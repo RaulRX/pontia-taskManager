@@ -18,7 +18,7 @@ class TaskCreate(BaseModel):
            if key not in ['title', 'content', 'deadline']:
                continue
            if not isinstance(value, str):
-               raise ValueError("All properties must be strings")
+               raise ValueError(f"Field '{key}' must be a string")
            request[key] = value.strip()
         return request
 
@@ -35,7 +35,7 @@ class TaskComplete(BaseModel):
     @model_validator(mode = "before")
     def valid_bool_value(cls, request: dict):
         if not isinstance(request["completed"], bool):
-            raise ValueError(f"Value must be a bool value")
+            raise ValueError("Field 'completed' must be a boolean")
         return request
 
     def to_model(self, id: int | None = None) -> Note:
@@ -51,7 +51,7 @@ class TaskWriteNote(BaseModel):
     def remove_spaces(cls, request: dict):
         content = request['content']
         if not isinstance(content, str):
-               raise ValueError("Content value must be a string")
+               raise ValueError("Field 'content' must be a string")
 
         request['content'] = content.strip()
         return request
@@ -76,7 +76,7 @@ class TaskUpdate(BaseModel):
     def remove_spaces(cls, request: dict):
         for key, value in request.items():
            if key in ['title', 'content', 'deadline'] and not isinstance(value, str):
-               raise ValueError("All values must be strings")
+               raise ValueError(f"Field '{key}' must be a string")
            request[key] = request[key].strip()
         return request
         

@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1
 # No comprueba si hay versión más nueva de pip (más rápido)
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-EXPOSE ${APP_PORT}
+EXPOSE 8080
 
 VOLUME [ "/var/lib/postgresql/data" ]
 

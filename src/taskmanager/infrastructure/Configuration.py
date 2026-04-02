@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from pathlib import Path
+import logging
 import os
 import psycopg2
 from sqlalchemy import create_engine
@@ -8,6 +9,7 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from src.taskmanager.infrastructure.data import Query
 
 BASE_DIR = Path(__file__).parent
+logger = logging.getLogger(__name__)
 
 class Db_initializer:
 
@@ -66,13 +68,18 @@ class Postgres_Initializer(Db_initializer):
         PASSWORD = os.getenv("POSTGRES_PASSWORD")
         PORT = os.getenv("POSTGRES_PORT")
         DB = os.getenv("POSTGRES_DB")
-        self.__connection = psycopg2.connect(
-            database=DB,
-            host=HOST,
-            user=USER,
-            password=PASSWORD,
-            port=PORT
-        )
+        try:
+            self.__connection = psycopg2.connect(
+                database=DB,
+                host=HOST,
+                user=USER,
+                password=PASSWORD,
+                port=PORT
+            )
+            logger.info("PostgreSQL connection established (host=%s, db=%s)", HOST, DB)
+        except psycopg2.OperationalError as e:
+            logger.error("Failed to connect to PostgreSQL (host=%s, db=%s): %s", HOST, DB, e)
+            raise
 
         self.__session = None
         
