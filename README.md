@@ -8,10 +8,12 @@ API REST para la gestion de notas/tareas desarrollada con **FastAPI**, **SQLAlch
 |---|---|---|
 | Python | 3.10+ | Runtime |
 | FastAPI | 0.135.1 | Framework web |
-| SQLAlchemy | 2.0.48 | ORM |
-| SQLite | - | Base de datos (fichero local) |
+| PostgreSQL | 14+ | Base de datos |
+| psycopg2 | - | Driver PostgreSQL |
+| SQLAlchemy | 2.0.48 | ORM (implementacion SQLite alternativa) |
 | Pydantic | 2.12.5 | Validacion de schemas |
 | Uvicorn | 0.41.0 | Servidor ASGI |
+| Docker Compose | v2 | Orquestacion de servicios |
 
 ## Estructura del proyecto
 
@@ -33,18 +35,29 @@ TaskManager/
 │       │   └── Model.py                     # Modelo de dominio (Note)
 │       ├── infrastructure/
 │       │   ├── Configuration.py             # Configuracion de BD y sesiones
-│       │   └── Entity.py                    # Entidad SQLAlchemy (Note_entity)
+│       │   ├── Entity.py                    # Entidad ORM (Note_entity)
+│       │   └── data/
+│       │       └── Query.py                 # Queries SQL para PostgreSQL
 │       ├── repository/
-│       │   ├── INote_repository.py          # Interfaz del repositorio (ABC)
-│       │   ├── Note_repository_impl.py      # Implementacion del repositorio
-│       │   └── Repository_exception.py      # Excepciones de repositorio
+│       │   ├── INote_repository.py          # Interfaz abstracta del repositorio
+│       │   ├── Repository_exception.py      # Excepciones de repositorio
+│       │   ├── postgres/
+│       │   │   └── Note_repository_impl.py  # Implementacion PostgreSQL (activa)
+│       │   └── sqlite/
+│       │       └── Note_repository_impl.py  # Implementacion SQLite (alternativa)
 │       └── service/
 │           ├── Service.py                   # Logica de negocio
 │           ├── Service_exception.py         # Excepciones de servicio
 │           ├── Note_mapper.py               # Mapper Model <-> Entity
 │           └── Utils.py                     # Validaciones auxiliares
+├── docker/
+│   ├── docker-compose.yaml                  # Orquestacion de servicios
+│   └── scripts/
+│       └── init.sql                         # Script de inicializacion de PostgreSQL
 ├── tests/
 │   └── test_python.py                       # Tests funcionales
+├── Dockerfile
+├── .env.example
 ├── requirements.txt
 └── README.md
 ```
@@ -517,12 +530,23 @@ La API centraliza el manejo de errores mediante exception handlers globales. Tod
 | `DuplicationException` | `409 Conflict` | Duplicidad en resultados |
 | `TextOverflowException` | `400 Bad Request` | Contenido excede el maximo permitido |
 | `NonWritableException` | `409 Conflict` | La nota esta completada y no se puede escribir |
-| `ValueError` | `400 Bad Request` | Error de validacion de dominio |
+| `ValueError` | `422 Unprocessable Entity` | Dato de entrada invalido |
 | `RequestValidationError` | `422 Unprocessable Entity` | Error de validacion de Pydantic |
 
 ## Base de datos
 
-La aplicacion utiliza **SQLite** con el fichero almacenado en `src/taskmanager/infrastructure/data/notes.db`. Se crea automaticamente al iniciar la aplicacion si no existe.
+La aplicacion utiliza **PostgreSQL** como base de datos. La conexion se configura mediante variables de entorno (ver `.env.example`).
+
+| Variable | Descripcion |
+|---|---|
+| `POSTGRES_HOST` | Host del servidor PostgreSQL |
+| `POSTGRES_USER` | Usuario de la base de datos |
+| `POSTGRES_PASSWORD` | Contrasena |
+| `POSTGRES_PORT` | Puerto (por defecto `5432`) |
+| `POSTGRES_DB` | Nombre de la base de datos |
+| `POSTGRES_DB_TABLE` | Nombre de la tabla principal |
+
+La forma recomendada de levantar la base de datos es mediante Docker Compose (ver seccion anterior).
 
 ### Esquema de la tabla `Note`
 
@@ -535,5 +559,3 @@ La aplicacion utiliza **SQLite** con el fichero almacenado en `src/taskmanager/i
 | `created_date` | `DATETIME` | No | `datetime.now` | Fecha de creacion |
 | `updated_date` | `DATETIME` | Si | `null` (auto en update) | Fecha de ultima modificacion |
 | `deadline_date` | `DATETIME` | Si | - | Fecha de vencimiento |
-
-> **Nota**: Si se modifica el esquema de la entidad, es necesario eliminar el fichero `notes.db` y reiniciar la aplicacion, ya que `create_all()` de SQLAlchemy no aplica `ALTER TABLE` sobre tablas existentes.

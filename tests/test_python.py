@@ -155,7 +155,7 @@ def test_modificar_nota_ko_title_largo():
 
 
 def test_modificar_nota_ko_deadline_pasado():
-    """PUT con deadline en el pasado -> 400 (schema valido, pero validacion de negocio rechaza)."""
+    """PUT con deadline en el pasado -> 422 (campo invalido rechazado como dato de entrada incorrecto)."""
     payload = {"title": "Nota", "content": "Contenido", "deadline": get_past_date()}
     r = requests.put(f"{BASE_URL}/{note_id}", json=payload)
     assert_status(r, 400)
