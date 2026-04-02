@@ -36,12 +36,12 @@ def Exception_handler(app: FastAPI) -> None:
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
-        return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))
+        return _error_response(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
 
     @app.exception_handler(ValidationError)
     async def validation_error_handler(request: Request, exc: ValueError):
-        return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))
+        return _error_response(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_error_handler(request: Request, exc: RequestValidationError):
-        return _error_response(status.HTTP_400_BAD_REQUEST, str(exc))
+        return _error_response(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
