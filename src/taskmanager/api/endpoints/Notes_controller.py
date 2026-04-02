@@ -21,7 +21,7 @@ note_service = Note_service(notes_repo)
         response_class=Response,
         responses={
             400: {"description": "Title or content is empty or exceeds maximum allowed length"},
-            422: {"description": "Validation error in request body"},
+            422: {"description": "Validation error — field type mismatch, pattern violation or missing required field"},
         })
 def create_note(task: TaskCreate) -> None:
     logger.info("Notes_controller::create_note -> Starting creating note")
@@ -74,7 +74,7 @@ def get_note(id: int) -> NoteResponse:
         response_model=NoteResponse,
         responses={
             404: {"description": "Note not found"},
-            422: {"description": "Invalid note fields (invalid date format or content too long)"},
+            422: {"description": "Validation error — invalid date format, content too long, or field type mismatch"},
         })
 def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
     logger.info("Notes_controller::modify_note -> Starting modifying note")
@@ -93,6 +93,7 @@ def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
             404: {"description": "Note not found"},
             400: {"description": "New content exceeds maximum allowed length"},
             409: {"description": "Note is closed and cannot be written, or duplicated note found"},
+            422: {"description": "Validation error — content must be a non-empty string"},
         })
 def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None:
     logger.info("Notes_controller::modify_note_content -> Starting writing content to note")
@@ -109,6 +110,7 @@ def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None
         responses={
             404: {"description": "Note not found"},
             409: {"description": "Duplicated note found"},
+            422: {"description": "Validation error — 'completed' must be a boolean"},
         })
 def complete_note(id: int, content_to_modify: TaskComplete) -> None:
     logger.info("Notes_controller::complete_note -> Starting completing note")

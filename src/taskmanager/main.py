@@ -5,7 +5,11 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
 
 import logging
 import os
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "WARNING").upper())
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "WARNING").upper(),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
 
 from fastapi import FastAPI
 import uvicorn
