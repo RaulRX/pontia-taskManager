@@ -125,6 +125,39 @@ Una vez ejecutando la aplicacion:
 - **Swagger UI**: http://127.0.0.1:8000/docs
 - **ReDoc**: http://127.0.0.1:8000/redoc
 
+## Ejecutar con Docker Compose
+
+### Requisitos previos
+
+- **Docker** instalado y en ejecucion
+- **Docker Compose** v2 (incluido con Docker Desktop)
+
+### Levantar los servicios
+
+Desde la raiz del proyecto (`TaskManager/`):
+
+```bash
+docker compose -f docker/docker-compose.yaml up -d
+```
+
+- `-d` ejecuta los contenedores en segundo plano
+
+La API se levantara en `http://localhost:8080`.
+
+### Detener los servicios
+
+```bash
+docker compose -f docker/docker-compose.yaml down
+```
+
+### Ver logs de la aplicacion
+
+```bash
+docker logs task-manager -f
+```
+
+---
+
 ## Ejecutar tests
 
 Los tests son un script de integracion que usa la libreria `requests` para interactuar con la API. Requieren que la aplicacion este ejecutandose previamente.

@@ -1,11 +1,14 @@
 from fastapi import Response, status
 from fastapi import APIRouter
 import os
+import logging
 from src.taskmanager.repository.postgres.Note_repository_impl import Repository
 from src.taskmanager.api.schemas.Request import TaskCreate, TaskComplete, TaskUpdate, TaskWriteNote
 from src.taskmanager.api.schemas.Response import NoteListResponse, NoteResponse
 from src.taskmanager.service.Service import Note_service
 from src.taskmanager.infrastructure.Configuration import Postgres_Initializer
+
+logger = logging.getLogger("Notes_controller")
 
 router = APIRouter()
 notes_repo = Repository(Postgres_Initializer(os.getenv("POSTGRES_DB_TABLE", "Notes")))
@@ -21,7 +24,9 @@ note_service = Note_service(notes_repo)
             422: {"description": "Validation error in request body"},
         })
 def create_note(task: TaskCreate) -> None:
+    logger.info("Notes_controller::create_note -> Starting creating note")
     note_service.save_note(task.to_model())
+    logger.info("Notes_controller::create_note -> Finished creating note")
 
 @router.get(path="",
         status_code=status.HTTP_200_OK,
@@ -29,8 +34,11 @@ def create_note(task: TaskCreate) -> None:
         operation_id="get_all_notes",
         response_model=NoteListResponse)
 def get_all_notes() -> NoteListResponse:
+    logger.info("Notes_controller::get_all_notes -> Starting retrieving all notes")
     notes = note_service.get_all_note()
-    return NoteListResponse.to_schema(notes)
+    response = NoteListResponse.to_schema(notes)
+    logger.info("Notes_controller::get_all_notes -> Finished retrieving all notes")
+    return response
 
 @router.get(path="/expirationNotes",
         status_code=status.HTTP_200_OK,
@@ -38,8 +46,11 @@ def get_all_notes() -> NoteListResponse:
         operation_id="get_expired_notes",
         response_model=NoteListResponse)
 def get_expired_notes() -> NoteListResponse:
+    logger.info("Notes_controller::get_expired_notes -> Starting retrieving expired notes")
     notes = note_service.get_expired_notes()
-    return NoteListResponse.to_schema(notes)
+    response = NoteListResponse.to_schema(notes)
+    logger.info("Notes_controller::get_expired_notes -> Finished retrieving expired notes")
+    return response
 
 @router.get(path="/{id}",
         status_code=status.HTTP_200_OK,
@@ -50,8 +61,11 @@ def get_expired_notes() -> NoteListResponse:
             404: {"description": "Note not found"},
         })
 def get_note(id: int) -> NoteResponse:
-    note = note_service.get_note(id);
-    return NoteResponse.to_schema(note)
+    logger.info("Notes_controller::get_note -> Starting retrieving note by id")
+    note = note_service.get_note(id)
+    response = NoteResponse.to_schema(note)
+    logger.info("Notes_controller::get_note -> Finished retrieving note by id")
+    return response
 
 @router.put(path="/{id}",
         status_code=status.HTTP_200_OK,
@@ -60,13 +74,15 @@ def get_note(id: int) -> NoteResponse:
         response_model=NoteResponse,
         responses={
             404: {"description": "Note not found"},
-            400: {"description": "Invalid note fields (invalid date format or content too long)"},
+            422: {"description": "Invalid note fields (invalid date format or content too long)"},
         })
 def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
+    logger.info("Notes_controller::modify_note -> Starting modifying note")
     note_model = note_to_modify.to_model(id)
     note = note_service.modify_note(note_model)
-
-    return NoteResponse.to_schema(note)
+    response = NoteResponse.to_schema(note)
+    logger.info("Notes_controller::modify_note -> Finished modifying note")
+    return response
 
 @router.patch(path="/{id}/content",
         status_code=status.HTTP_200_OK,
@@ -79,8 +95,11 @@ def modify_note(id: int, note_to_modify: TaskUpdate) -> NoteResponse:
             409: {"description": "Note is closed and cannot be written, or duplicated note found"},
         })
 def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None:
+    logger.info("Notes_controller::modify_note_content -> Starting writing content to note")
     note_model = content_to_modify.to_model(id)
-    return note_service.write_content(id, note_model.content)
+    result = note_service.write_content(id, note_model.content)
+    logger.info("Notes_controller::modify_note_content -> Finished writing content to note")
+    return result
 
 @router.patch(path="/{id}/completed",
         status_code=status.HTTP_204_NO_CONTENT,
@@ -92,8 +111,10 @@ def modify_note_content(id: int, content_to_modify: TaskWriteNote) -> int | None
             409: {"description": "Duplicated note found"},
         })
 def complete_note(id: int, content_to_modify: TaskComplete) -> None:
+    logger.info("Notes_controller::complete_note -> Starting completing note")
     note_model = content_to_modify.to_model(id)
     note_service.close_note(note_model)
+    logger.info("Notes_controller::complete_note -> Finished completing note")
 
 @router.delete(path="",
         status_code=status.HTTP_204_NO_CONTENT,
@@ -101,7 +122,9 @@ def complete_note(id: int, content_to_modify: TaskComplete) -> None:
         operation_id="remove_notes",
         response_class=Response)
 def remove_notes() -> None:
+    logger.info("Notes_controller::remove_notes -> Starting removing all notes")
     note_service.remove_all()
+    logger.info("Notes_controller::remove_notes -> Finished removing all notes")
 
 @router.delete(path="/{id}",
         status_code=status.HTTP_200_OK,
@@ -109,4 +132,7 @@ def remove_notes() -> None:
         operation_id="remove_note",
         response_description="List of IDs successfully removed")
 def remove_note(id: int) -> list[int]:
-    return note_service.remove_list_notes([id])
+    logger.info("Notes_controller::remove_note -> Starting removing note by id")
+    result = note_service.remove_list_notes([id])
+    logger.info("Notes_controller::remove_note -> Finished removing note by id")
+    return result

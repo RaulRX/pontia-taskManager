@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
 
+import logging
+import os
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "WARNING").upper())
+
 from fastapi import FastAPI
 import uvicorn
 from src.taskmanager.api.Routers import task_router
