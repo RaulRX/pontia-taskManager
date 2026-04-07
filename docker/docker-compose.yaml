@@ -1,11 +1,14 @@
 services:
   postgres:
     container_name: postgresDB
-    image: postgres:14.22-trixie
+    image: postgres:15-alpine
     restart: unless-stopped
+    secrets:
+      - postgress_user
+      - postgress_password
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: my,s3cR3t,p4ssWORD
+      POSTGRES_USER: /run/secrets/postgres_user
+      POSTGRES_PASSWORD: /run/secrets/postgres_password
       POSTGRES_DB: TaskManager
     networks:
       - net-taskmanager
@@ -30,10 +33,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    secrets:
+      - postgress_user
+      - postgress_password
+      - postgres_host
     environment:
-      POSTGRES_HOST: postgresDB
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: my,s3cR3t,p4ssWORD
+      # POSTGRES_HOST: postgresDB
+      POSTGRES_HOST: /run/secrets/postgres_host
+      POSTGRES_USER: /run/secrets/postgres_user
+      POSTGRES_PASSWORD: /run/secrets/postgres_password
       POSTGRES_PORT: 5432
       POSTGRES_DB: TaskManager
       POSTGRES_DB_TABLE: Notes
@@ -50,3 +58,11 @@ volumes:
 
 networks:
   net-taskmanager:
+
+secrets:
+  postgress_user:
+    file: ./env/postgres_user
+  postgress_password:
+    file: ./env/postgres_password
+  postgres_host:
+    file: ./env/postgres_host
