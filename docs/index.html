@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitnessHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes slideRight { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideBottom { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .anim-fade { animation: fadeIn 0.5s ease-out; }
+    .anim-slide-up { animation: slideUp 0.2s ease-out; }
+    .anim-zoom { animation: zoomIn 0.3s ease-out; }
+    .anim-slide-right { animation: slideRight 0.5s ease-out; }
+    .anim-slide-bottom { animation: slideBottom 0.5s ease-out; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const h = React.createElement;
+
+    // --- SVG Icon component ---
+    const iconPaths = {
+      home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+      search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+      'message-circle': '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>',
+      settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+      user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+      plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+      bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+      send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      'check-circle-2': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+      'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+      activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+      flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+      'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+      'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+      'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+      shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+      'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+      sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
+      smartphone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+      globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+      lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+      dumbbell: '<path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>',
+      apple: '<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>'
+    };
+
+    const Icon = ({ name, size = 24, className = '', style = {} }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        style={style}
+        dangerouslySetInnerHTML={{ __html: iconPaths[name] || '' }}
+      />
+    );
+
+    const App = () => {
+      const [activeTab, setActiveTab] = useState('home');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('all');
+      const [selectedDate, setSelectedDate] = useState(new Date(2024, 4, 10));
+      const [viewDetail, setViewDetail] = useState(null);
+      const [showUserMenu, setShowUserMenu] = useState(false);
+      const [messageInput, setMessageInput] = useState('');
+      const [messages, setMessages] = useState([
+        { id: 1, text: "\u00a1Hola Alex! He revisado tu progreso de ayer. Vas muy bien con las cargas.", sender: "coach", time: "10:30 AM" },
+        { id: 2, text: "\u00bfCrees que deba aumentar el peso en la banca ma\u00f1ana?", sender: "user", time: "10:32 AM" },
+        { id: 3, text: "S\u00ed, sube 2.5kg por lado pero mant\u00e9n las repeticiones en 10.", sender: "coach", time: "10:45 AM" }
+      ]);
+
+      const userMenuRef = useRef(null);
+
+      useEffect(() => {
+        const handleClickOutside = (event) => {
+          if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+            setShowUserMenu(false);
+          }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+      }, []);
+
+      const [user, setUser] = useState({
+        name: "Alex Garc\u00eda",
+        email: "alex.garcia@email.com",
+        goal: "Ganancia Muscular",
+        plan: "Premium Fitness+",
+        avatar: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=200&h=200&auto=format&fit=crop"
+      });
+
+      const [myPlans] = useState([
+        { id: 1, title: "Rutina Hipertrofia A", type: "training", date: "2024-05-10", status: "En curso", progress: 65, color: "blue" },
+        { id: 2, title: "Dieta Volumen Limpio", type: "nutrition", date: "2024-05-12", status: "Activo", progress: 40, color: "green" }
+      ]);
+
+      const scheduleData = {
+        "2024-05-10": [
+          { id: 1, title: "Pecho y Tr\u00edceps (Hipertrofia)", type: "training", time: "09:00 AM", color: "blue" },
+          { id: 18, title: "Cena: Pollo con Batata", type: "nutrition", time: "21:00 PM", color: "green" }
+        ],
+        "2024-05-15": [
+          { id: 20, title: "Sesi\u00f3n HIIT Cardio", type: "training", time: "07:30 AM", color: "red" },
+          { id: 21, title: "Almuerzo: Ensalada Quinoa", type: "nutrition", time: "14:00 PM", color: "green" }
+        ],
+        "2024-05-22": [
+          { id: 30, title: "Pierna y Core (Fuerza)", type: "training", time: "18:00 PM", color: "blue" }
+        ]
+      };
+
+      const catalogPlans = [
+        { id: 101, title: "Fuerza Explosiva", type: "training", level: "Avanzado", duration: "8 sem", rating: 4.8, category: "training" },
+        { id: 102, title: "Ayuno Intermitente 16:8", type: "nutrition", level: "Intermedio", duration: "Indefinido", rating: 4.5, category: "nutrition" }
+      ];
+
+      const filteredCatalog = catalogPlans.filter(plan => {
+        const matchesSearch = plan.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'all' || plan.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+      });
+
+      const handleSendMessage = (e) => {
+        e.preventDefault();
+        if (!messageInput.trim()) return;
+        const newMessage = {
+          id: messages.length + 1,
+          text: messageInput,
+          sender: "user",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages([...messages, newMessage]);
+        setMessageInput('');
+      };
+
+      const detailedPlans = {
+        1: { id: 1, title: "Rutina Hipertrofia A", type: "training", description: "Enfoque en volumen.", image: "https://images.unsplash.com/photo-1583454110551-21f2fa2adfcd?q=80&w=800&auto=format&fit=crop", exercises: [{ name: "Press Banca", sets: "4x10", notes: "Lento" }] },
+        2: { id: 2, title: "Dieta Volumen Limpio", type: "nutrition", description: "Super\u00e1vit controlado.", image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=800&auto=format&fit=crop", foods: [{ name: "Pollo", cal: 330 }], totalCalories: 1000 }
+      };
+
+      if (viewDetail) {
+        const detail = detailedPlans[viewDetail];
+        return (
+          <div className="min-h-screen bg-slate-50 flex flex-col anim-fade">
+            <header className="p-4 bg-white border-b flex items-center gap-4 sticky top-0 z-50">
+              <button onClick={() => setViewDetail(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="arrow-left" size={24} /></button>
+              <h2 className="font-bold text-lg">Detalles del Plan</h2>
+            </header>
+            <main className="max-w-3xl mx-auto w-full p-4 md:p-8 space-y-6">
+              <div className="rounded-3xl overflow-hidden shadow-sm border bg-white">
+                <img src={detail.image} className="w-full h-64 object-cover" />
+                <div className="p-6">
+                   <h1 className="text-3xl font-bold mb-4">{detail.title}</h1>
+                   <p className="text-slate-600 mb-6">{detail.description}</p>
+                   {detail.type === 'training' ? (
+                     detail.exercises.map((ex, i) => <div key={i} className="p-4 bg-slate-50 rounded-2xl mb-2 flex justify-between"><span>{ex.name}</span><b>{ex.sets}</b></div>)
+                   ) : (
+                     detail.foods.map((f, i) => <div key={i} className="p-4 bg-slate-50 rounded-2xl mb-2 flex justify-between"><span>{f.name}</span><b>{f.cal} kcal</b></div>)
+                   )}
+                </div>
+              </div>
+              <button onClick={() => setViewDetail(null)} className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl">Volver</button>
+            </main>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 md:pb-0 md:pl-64 flex">
+
+          {/* SIDEBAR DESKTOP */}
+          <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 flex-col p-6 z-40">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                <Icon name="activity" size={24} />
+              </div>
+              <span className="text-xl font-bold tracking-tight">FitnessHub</span>
+            </div>
+
+            <div className="space-y-1 flex-1">
+              <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon="home" label="Mi Panel" />
+              <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon="calendar" label="Calendario" />
+              <NavItem active={activeTab === 'explore'} onClick={() => setActiveTab('explore')} icon="search" label="Explorar Planes" />
+              <NavItem active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon="message-circle" label="Mensajes" />
+              <NavItem active={activeTab === 'settings' || activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="settings" label="Ajustes" />
+            </div>
+
+            <div className="pt-6 border-t relative" ref={userMenuRef}>
+              {showUserMenu && (
+                <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 anim-slide-up z-50">
+                  <button onClick={() => {setActiveTab('profile'); setShowUserMenu(false)}} className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
+                    <Icon name="user" size={16} className="text-slate-400" /> Mi Perfil
+                  </button>
+                  <button className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
+                    <Icon name="credit-card" size={16} className="text-slate-400" /> Facturaci&oacute;n
+                  </button>
+                  <button className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
+                    <Icon name="shield" size={16} className="text-slate-400" /> Privacidad
+                  </button>
+                  <div className="h-px bg-slate-100 my-1"></div>
+                  <button className="w-full flex items-center gap-3 p-3 hover:bg-red-50 text-red-600 rounded-xl text-sm font-semibold transition-colors">
+                    <Icon name="log-out" size={16} /> Cerrar Sesi&oacute;n
+                  </button>
+                </div>
+              )}
+              <div
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className={`flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors ${showUserMenu ? 'bg-slate-50' : ''}`}
+              >
+                <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border-2 border-indigo-100" />
+                <div className="overflow-hidden">
+                  <p className="text-sm font-semibold truncate">{user.name}</p>
+                  <p className="text-xs text-slate-500 truncate">Plan Premium</p>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          {/* CONTENIDO PRINCIPAL */}
+          <div className="flex-1 overflow-y-auto">
+            <header className="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-30">
+              <span className="text-xl font-bold text-indigo-600 flex items-center gap-2"><Icon name="activity" size={20} /> FitnessHub</span>
+              <div className="flex items-center gap-4">
+                <Icon name="bell" size={20} className="text-slate-400" />
+                <img src={user.avatar} onClick={() => setActiveTab('profile')} className="w-8 h-8 rounded-full object-cover cursor-pointer" />
+              </div>
+            </header>
+
+            <main className="max-w-5xl mx-auto p-4 md:p-10">
+
+              {activeTab === 'home' && (
+                <div className="space-y-8 anim-fade">
+                  <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <h1 className="text-3xl font-bold text-slate-900">Bienvenido, {user.name.split(' ')[0]}</h1>
+                      <p className="text-slate-500 mt-1">Tu progreso hoy va por buen camino.</p>
+                    </div>
+                    <div className="bg-white p-2 rounded-lg border flex items-center gap-2 px-4 shadow-sm h-fit w-fit">
+                      <Icon name="zap" size={16} className="text-amber-500" style={{fill: '#f59e0b'}} />
+                      <span className="text-sm font-bold">Racha: 12 d&iacute;as</span>
+                    </div>
+                  </section>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {myPlans.map(plan => (
+                      <PlanCard key={plan.id} plan={plan} onClick={() => setViewDetail(plan.id)} />
+                    ))}
+                    <button onClick={() => setActiveTab('explore')} className="border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all group">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 group-hover:bg-indigo-100 transition-colors"><Icon name="plus" size={24} /></div>
+                      <span className="font-semibold">Nuevo Plan</span>
+                    </button>
+                  </div>
+
+                  <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="font-bold text-xl">Eventos para el 10 Mayo</h2>
+                      <button onClick={() => setActiveTab('calendar')} className="text-indigo-600 text-sm font-semibold hover:underline">Ver agenda completa</button>
+                    </div>
+                    <div className="space-y-4">
+                      {scheduleData["2024-05-10"].map(event => (
+                        <ScheduleItem key={event.id} time={event.time} title={event.title} category={event.type === 'training' ? 'Entrenamiento' : 'Nutrici\u00f3n'} active={event.type === 'training'} />
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {activeTab === 'calendar' && (
+                <div className="space-y-6 anim-zoom">
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <CalendarGrid selectedDate={selectedDate} onDateSelect={(date) => setSelectedDate(date)} data={scheduleData} />
+                      </div>
+                      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 h-fit">
+                        <h3 className="font-bold text-lg mb-6 flex items-center justify-between">Actividades <span className="text-xs text-slate-400">{selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span></h3>
+                        <div className="space-y-4">
+                          {(scheduleData[selectedDate.toISOString().split('T')[0]] || []).map(event => (
+                            <ScheduleItem key={event.id} time={event.time} title={event.title} category={event.type === 'training' ? 'Entrenamiento' : 'Nutrici\u00f3n'} />
+                          ))}
+                        </div>
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {activeTab === 'messages' && (
+                <div className="h-[calc(100vh-200px)] md:h-[calc(100vh-80px)] bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex anim-slide-bottom">
+                  <div className="w-20 md:w-72 border-r bg-slate-50/50 flex flex-col">
+                    <div className="p-4 md:p-6 border-b bg-white">
+                      <h2 className="hidden md:block font-bold text-xl">Mensajes</h2>
+                      <div className="md:hidden flex justify-center"><Icon name="message-circle" className="text-indigo-600" /></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <div className="p-2 md:p-3 bg-indigo-50 border-r-4 border-indigo-600 flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex-shrink-0 flex items-center justify-center text-indigo-600 font-bold">C</div>
+                        <div className="hidden md:block overflow-hidden">
+                          <p className="text-sm font-bold truncate">Tu Entrenador</p>
+                          <p className="text-xs text-indigo-600 font-medium truncate">En l&iacute;nea</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col bg-white">
+                    <div className="p-4 border-b flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs">C</div>
+                        <p className="font-bold text-slate-800">Tu Entrenador</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+                      {messages.map(msg => (
+                        <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${msg.sender === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'}`}>
+                            {msg.text}
+                            <p className={`text-[10px] mt-1 ${msg.sender === 'user' ? 'text-indigo-100' : 'text-slate-400'}`}>{msg.time}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-3">
+                      <input
+                        type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        placeholder="Escribe un mensaje..."
+                        className="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      />
+                      <button type="submit" className="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                        <Icon name="send" size={20} />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'explore' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 anim-slide-right">
+                  {filteredCatalog.map(item => <CatalogItem key={item.id} item={item} />)}
+                </div>
+              )}
+
+              {activeTab === 'profile' && (
+                <div className="max-w-4xl mx-auto space-y-8 anim-fade pb-10">
+                  <div className="bg-white rounded-[2rem] shadow-sm border p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-6 opacity-5">
+                       <Icon name="activity" size={120} />
+                    </div>
+                    <div className="relative">
+                      <img src={user.avatar} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-xl" />
+                      <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md border hover:bg-slate-50 transition-colors">
+                        <Icon name="plus" size={16} className="text-indigo-600" />
+                      </button>
+                    </div>
+                    <div className="text-center md:text-left flex-1">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
+                        <h2 className="text-3xl font-black text-slate-800">{user.name}</h2>
+                        <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit mx-auto md:mx-0">
+                          <Icon name="sparkles" size={12} /> {user.plan}
+                        </span>
+                      </div>
+                      <p className="text-slate-500 font-medium mb-4">{user.email}</p>
+                      <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                        <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-xs font-bold text-slate-600 flex items-center gap-2">
+                          <Icon name="flame" size={14} className="text-orange-500" /> Meta: {user.goal}
+                        </div>
+                        <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-xs font-bold text-slate-600 flex items-center gap-2">
+                          <Icon name="zap" size={14} className="text-amber-500" /> Racha: 12 d&iacute;as
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-white rounded-[2rem] shadow-sm border p-8 flex flex-col">
+                      <h3 className="font-black text-lg mb-6 flex items-center gap-2">
+                        <Icon name="credit-card" size={20} className="text-indigo-600" /> Detalles del Plan
+                      </h3>
+                      <div className="space-y-4 flex-1">
+                        {[
+                          "Acceso ilimitado a rutinas IA",
+                          "Soporte 24/7 con tu entrenador",
+                          "Planes nutricionales personalizados",
+                          "An\u00e1lisis biom\u00e9trico semanal",
+                          "Acceso a webinars exclusivos"
+                        ].map((item, i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                              <Icon name="check-circle-2" size={12} />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-600">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <button className="w-full mt-8 py-3 bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-100 transition-colors border border-slate-200">
+                        Gestionar Suscripci&oacute;n
+                      </button>
+                    </div>
+
+                    <div className="bg-indigo-900 rounded-[2rem] shadow-xl p-8 text-white flex flex-col relative overflow-hidden group">
+                      <div className="absolute -top-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                         <Icon name="sparkles" size={200} />
+                      </div>
+                      <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+                        <Icon name="sparkles" size={20} className="text-amber-400" /> Perfil Bio-Inteligente
+                      </h3>
+                      <p className="text-indigo-200 text-sm mb-6 leading-relaxed">
+                        Nuestra IA ha analizado tus 3 meses de progreso. Tienes un perfil tipo <b>"Endo-Mesomorfo"</b> con alta capacidad de recuperaci&oacute;n.
+                      </p>
+                      <div className="space-y-3 mb-8">
+                        <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
+                          <p className="text-[10px] uppercase font-bold text-indigo-300 mb-1">Potencial Muscular</p>
+                          <div className="w-full bg-white/20 h-1.5 rounded-full">
+                            <div className="bg-amber-400 h-full rounded-full" style={{width: '85%'}}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <button className="w-full py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+                        Ver Informe Completo IA <Icon name="chevron-right" size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-[2rem] shadow-sm border p-8">
+                    <h3 className="font-black text-lg mb-6 flex items-center gap-2">
+                      <Icon name="settings" size={20} className="text-indigo-600" /> Ajustes de Aplicaci&oacute;n
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                      <SettingsToggle label="Notificaciones Push" icon="bell" active />
+                      <SettingsToggle label="Modo Oscuro Autom\u00e1tico" icon="smartphone" />
+                      <SettingsToggle label="Sincronizar Salud (Apple/Google)" icon="activity" active />
+                      <SettingsToggle label="Idioma" value="Espa\u00f1ol (ES)" icon="globe" />
+                      <SettingsToggle label="Autenticaci\u00f3n Biom\u00e9trica" icon="lock" active />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(activeTab === 'settings' && activeTab !== 'profile') && (
+                <div className="max-w-2xl mx-auto space-y-8 anim-fade">
+                   <div className="bg-white rounded-3xl shadow-sm border p-8 space-y-8">
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        <img src={user.avatar} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-xl" />
+                        <h2 className="text-2xl font-bold">{user.name}</h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <InputField label="Nombre Completo" value={user.name} />
+                        <InputField label="Email Personal" value={user.email} />
+                      </div>
+                   </div>
+                </div>
+              )}
+            </main>
+          </div>
+
+          <footer className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-40 shadow-lg">
+            <NavIcon active={activeTab === 'home'} icon="home" label="Inicio" onClick={() => setActiveTab('home')} />
+            <NavIcon active={activeTab === 'calendar'} icon="calendar" label="Agenda" onClick={() => setActiveTab('calendar')} />
+            <NavIcon active={activeTab === 'messages'} icon="message-circle" label="Chat" onClick={() => setActiveTab('messages')} />
+            <NavIcon active={activeTab === 'profile'} icon="user" label="Perfil" onClick={() => setActiveTab('profile')} />
+          </footer>
+        </div>
+      );
+    };
+
+    // COMPONENTES AUXILIARES
+
+    const SettingsToggle = ({ label, icon, active = false, value = null }) => (
+      <div className="flex items-center justify-between py-4 border-b border-slate-50 last:border-0 group">
+        <div className="flex items-center gap-3">
+          <div className="text-slate-400 group-hover:text-indigo-600 transition-colors"><Icon name={icon} size={18} /></div>
+          <span className="text-sm font-bold text-slate-700">{label}</span>
+        </div>
+        {value ? (
+          <div className="flex items-center gap-1 text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg cursor-pointer">
+            {value} <Icon name="chevron-down" size={14} />
+          </div>
+        ) : (
+          <div className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${active ? 'bg-indigo-600' : 'bg-slate-200'}`}>
+            <div className={`bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${active ? 'translate-x-5' : 'translate-x-0'}`}></div>
+          </div>
+        )}
+      </div>
+    );
+
+    const NavItem = ({ active, icon, label, onClick }) => (
+      <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}>
+        <Icon name={icon} size={20} /> <span className="text-sm">{label}</span>
+      </button>
+    );
+
+    const NavIcon = ({ active, icon, label, onClick }) => (
+      <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 transition-all ${active ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}>
+        <Icon name={icon} size={24} />
+        <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+      </button>
+    );
+
+    const PlanCard = ({ plan, onClick }) => {
+      const colorMap = {
+        blue: { bg: 'bg-blue-50', text: 'text-blue-600', bar: 'bg-blue-500' },
+        green: { bg: 'bg-green-50', text: 'text-green-600', bar: 'bg-green-500' },
+        red: { bg: 'bg-red-50', text: 'text-red-600', bar: 'bg-red-500' }
+      };
+      const c = colorMap[plan.color] || colorMap.blue;
+      return (
+        <div onClick={onClick} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm cursor-pointer relative overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl hover:border-indigo-200 group">
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="external-link" size={16} className="text-indigo-400" /></div>
+          <div className={`w-12 h-12 rounded-2xl ${c.bg} flex items-center justify-center ${c.text} mb-4 group-hover:scale-110 transition-transform`}>
+            {plan.type === 'training' ? <Icon name="dumbbell" size={24} /> : <Icon name="apple" size={24} />}
+          </div>
+          <h3 className="font-bold text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">{plan.title}</h3>
+          <div className="w-full bg-slate-100 h-2 rounded-full mt-4 overflow-hidden">
+            <div className={`${c.bar} h-full`} style={{ width: `${plan.progress}%` }}></div>
+          </div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">{plan.progress}% COMPLETADO</p>
+        </div>
+      );
+    };
+
+    const ScheduleItem = ({ time, title, category, active = false }) => (
+      <div className={`flex items-start gap-4 p-4 rounded-2xl transition-all border ${active ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-transparent hover:bg-slate-50'}`}>
+        <span className="text-xs font-black text-slate-400 min-w-[70px] pt-1">{time}</span>
+        <div className="flex-1">
+          <h4 className={`font-bold text-sm ${active ? 'text-indigo-900' : 'text-slate-800'}`}>{title}</h4>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{category}</p>
+        </div>
+        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${active ? 'border-indigo-600 bg-white text-indigo-600' : 'border-slate-200 text-transparent'}`}>
+          <Icon name="check-circle-2" size={14} />
+        </div>
+      </div>
+    );
+
+    const CatalogItem = ({ item }) => (
+      <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all group">
+        <div className="h-32 bg-slate-200 relative overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&h=250&auto=format&fit=crop" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="absolute bottom-3 left-4 text-white z-10"><p className="text-[9px] font-black uppercase">{item.level}</p><h4 className="font-bold text-sm">{item.title}</h4></div>
+        </div>
+        <div className="p-4"><button className="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700">Activar Plan</button></div>
+      </div>
+    );
+
+    const CalendarGrid = ({ selectedDate, onDateSelect, data }) => {
+      const days = [];
+      const startDay = new Date(2024, 4, 1).getDay();
+      const offset = startDay === 0 ? 6 : startDay - 1;
+      for (let i = 0; i < offset; i++) days.push(null);
+      for (let d = 1; d <= 31; d++) days.push(new Date(2024, 4, d));
+
+      return (
+        <div className="select-none">
+          <h2 className="font-black text-2xl capitalize mb-8 text-slate-800">Mayo 2024</h2>
+          <div className="grid grid-cols-7 gap-2 mb-4 text-center">
+            {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map(day => <span key={day} className="text-[10px] font-black text-slate-400 uppercase">{day}</span>)}
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {days.map((day, idx) => {
+              if (!day) return <div key={idx} className="aspect-square"></div>;
+              const isSelected = day.toDateString() === selectedDate.toDateString();
+              const dateKey = day.toISOString().split('T')[0];
+              return (
+                <div key={idx} onClick={() => onDateSelect(day)} className={`aspect-square flex flex-col items-center justify-center rounded-2xl cursor-pointer border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-50 hover:border-indigo-100'}`}>
+                  <span className="text-sm font-bold">{day.getDate()}</span>
+                  {data[dateKey] && <div className="flex gap-0.5 mt-1">{data[dateKey].map((_, i) => <div key={i} className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`}></div>)}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const InputField = ({ label, value }) => (
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-black text-slate-400 uppercase">{label}</label>
+        <input type="text" defaultValue={value} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none" />
+      </div>
+    );
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
