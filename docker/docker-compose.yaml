@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: postgresDB
-    image: postgres:14.22-trixie
+    image: postgres:15-alpine
     restart: unless-stopped
     secrets:
       - postgress_user
