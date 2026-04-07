@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FitnessHub</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide-react@0.344.0/dist/umd/lucide-react.min.js"></script>
   <style>
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -24,56 +25,12 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    const h = React.createElement;
-
-    // --- SVG Icon component ---
-    const iconPaths = {
-      home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-      calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
-      search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
-      'message-circle': '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/>',
-      settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
-      user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
-      plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
-      bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
-      send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
-      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-      'check-circle-2': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-      zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
-      'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
-      activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
-      flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
-      'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-      'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
-      'chevron-right': '<path d="m9 18 6-6-6-6"/>',
-      shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
-      'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
-      sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
-      smartphone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
-      globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
-      lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-      'chevron-down': '<path d="m6 9 6 6 6-6"/>',
-      dumbbell: '<path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>',
-      apple: '<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>'
-    };
-
-    const Icon = ({ name, size = 24, className = '', style = {} }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-        style={style}
-        dangerouslySetInnerHTML={{ __html: iconPaths[name] || '' }}
-      />
-    );
+    const { useState, useEffect, useRef, cloneElement } = React;
+    const {
+      Dumbbell, Apple, Calendar, Settings, MessageCircle, User, Home, Plus, Search, Bell,
+      Send, X, CheckCircle2, Zap, ArrowLeft, Activity, Flame, ExternalLink, LogOut,
+      ChevronRight, Shield, CreditCard, Sparkles, Smartphone, Globe, Lock, ChevronDown
+    } = lucideReact;
 
     const App = () => {
       const [activeTab, setActiveTab] = useState('home');
@@ -162,7 +119,7 @@
         return (
           <div className="min-h-screen bg-slate-50 flex flex-col anim-fade">
             <header className="p-4 bg-white border-b flex items-center gap-4 sticky top-0 z-50">
-              <button onClick={() => setViewDetail(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><Icon name="arrow-left" size={24} /></button>
+              <button onClick={() => setViewDetail(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><ArrowLeft size={24} /></button>
               <h2 className="font-bold text-lg">Detalles del Plan</h2>
             </header>
             <main className="max-w-3xl mx-auto w-full p-4 md:p-8 space-y-6">
@@ -191,34 +148,34 @@
           <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 flex-col p-6 z-40">
             <div className="flex items-center gap-3 mb-10">
               <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-                <Icon name="activity" size={24} />
+                <Activity size={24} />
               </div>
               <span className="text-xl font-bold tracking-tight">FitnessHub</span>
             </div>
 
             <div className="space-y-1 flex-1">
-              <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon="home" label="Mi Panel" />
-              <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon="calendar" label="Calendario" />
-              <NavItem active={activeTab === 'explore'} onClick={() => setActiveTab('explore')} icon="search" label="Explorar Planes" />
-              <NavItem active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon="message-circle" label="Mensajes" />
-              <NavItem active={activeTab === 'settings' || activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon="settings" label="Ajustes" />
+              <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={20}/>} label="Mi Panel" />
+              <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon={<Calendar size={20}/>} label="Calendario" />
+              <NavItem active={activeTab === 'explore'} onClick={() => setActiveTab('explore')} icon={<Search size={20}/>} label="Explorar Planes" />
+              <NavItem active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={<MessageCircle size={20}/>} label="Mensajes" />
+              <NavItem active={activeTab === 'settings' || activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<Settings size={20}/>} label="Ajustes" />
             </div>
 
             <div className="pt-6 border-t relative" ref={userMenuRef}>
               {showUserMenu && (
                 <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 anim-slide-up z-50">
                   <button onClick={() => {setActiveTab('profile'); setShowUserMenu(false)}} className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
-                    <Icon name="user" size={16} className="text-slate-400" /> Mi Perfil
+                    <User size={16} className="text-slate-400" /> Mi Perfil
                   </button>
                   <button className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
-                    <Icon name="credit-card" size={16} className="text-slate-400" /> Facturaci&oacute;n
+                    <CreditCard size={16} className="text-slate-400" /> Facturaci&oacute;n
                   </button>
                   <button className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors">
-                    <Icon name="shield" size={16} className="text-slate-400" /> Privacidad
+                    <Shield size={16} className="text-slate-400" /> Privacidad
                   </button>
                   <div className="h-px bg-slate-100 my-1"></div>
                   <button className="w-full flex items-center gap-3 p-3 hover:bg-red-50 text-red-600 rounded-xl text-sm font-semibold transition-colors">
-                    <Icon name="log-out" size={16} /> Cerrar Sesi&oacute;n
+                    <LogOut size={16} /> Cerrar Sesi&oacute;n
                   </button>
                 </div>
               )}
@@ -238,9 +195,9 @@
           {/* CONTENIDO PRINCIPAL */}
           <div className="flex-1 overflow-y-auto">
             <header className="md:hidden flex items-center justify-between p-4 bg-white border-b sticky top-0 z-30">
-              <span className="text-xl font-bold text-indigo-600 flex items-center gap-2"><Icon name="activity" size={20} /> FitnessHub</span>
+              <span className="text-xl font-bold text-indigo-600 flex items-center gap-2"><Activity size={20} /> FitnessHub</span>
               <div className="flex items-center gap-4">
-                <Icon name="bell" size={20} className="text-slate-400" />
+                <Bell size={20} className="text-slate-400" />
                 <img src={user.avatar} onClick={() => setActiveTab('profile')} className="w-8 h-8 rounded-full object-cover cursor-pointer" />
               </div>
             </header>
@@ -255,7 +212,7 @@
                       <p className="text-slate-500 mt-1">Tu progreso hoy va por buen camino.</p>
                     </div>
                     <div className="bg-white p-2 rounded-lg border flex items-center gap-2 px-4 shadow-sm h-fit w-fit">
-                      <Icon name="zap" size={16} className="text-amber-500" style={{fill: '#f59e0b'}} />
+                      <Zap size={16} className="text-amber-500" style={{fill: '#f59e0b'}} />
                       <span className="text-sm font-bold">Racha: 12 d&iacute;as</span>
                     </div>
                   </section>
@@ -265,7 +222,7 @@
                       <PlanCard key={plan.id} plan={plan} onClick={() => setViewDetail(plan.id)} />
                     ))}
                     <button onClick={() => setActiveTab('explore')} className="border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all group">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 group-hover:bg-indigo-100 transition-colors"><Icon name="plus" size={24} /></div>
+                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 group-hover:bg-indigo-100 transition-colors"><Plus size={24} /></div>
                       <span className="font-semibold">Nuevo Plan</span>
                     </button>
                   </div>
@@ -307,7 +264,7 @@
                   <div className="w-20 md:w-72 border-r bg-slate-50/50 flex flex-col">
                     <div className="p-4 md:p-6 border-b bg-white">
                       <h2 className="hidden md:block font-bold text-xl">Mensajes</h2>
-                      <div className="md:hidden flex justify-center"><Icon name="message-circle" className="text-indigo-600" /></div>
+                      <div className="md:hidden flex justify-center"><MessageCircle className="text-indigo-600" /></div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       <div className="p-2 md:p-3 bg-indigo-50 border-r-4 border-indigo-600 flex items-center gap-3">
@@ -345,7 +302,7 @@
                         className="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                       />
                       <button type="submit" className="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                        <Icon name="send" size={20} />
+                        <Send size={20} />
                       </button>
                     </form>
                   </div>
@@ -360,39 +317,41 @@
 
               {activeTab === 'profile' && (
                 <div className="max-w-4xl mx-auto space-y-8 anim-fade pb-10">
+                  {/* Header de Perfil */}
                   <div className="bg-white rounded-[2rem] shadow-sm border p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-6 opacity-5">
-                       <Icon name="activity" size={120} />
+                       <Activity size={120} />
                     </div>
                     <div className="relative">
                       <img src={user.avatar} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-xl" />
                       <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md border hover:bg-slate-50 transition-colors">
-                        <Icon name="plus" size={16} className="text-indigo-600" />
+                        <Plus size={16} className="text-indigo-600" />
                       </button>
                     </div>
                     <div className="text-center md:text-left flex-1">
                       <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
                         <h2 className="text-3xl font-black text-slate-800">{user.name}</h2>
                         <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit mx-auto md:mx-0">
-                          <Icon name="sparkles" size={12} /> {user.plan}
+                          <Sparkles size={12} /> {user.plan}
                         </span>
                       </div>
                       <p className="text-slate-500 font-medium mb-4">{user.email}</p>
                       <div className="flex flex-wrap justify-center md:justify-start gap-3">
                         <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-xs font-bold text-slate-600 flex items-center gap-2">
-                          <Icon name="flame" size={14} className="text-orange-500" /> Meta: {user.goal}
+                          <Flame size={14} className="text-orange-500" /> Meta: {user.goal}
                         </div>
                         <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-xs font-bold text-slate-600 flex items-center gap-2">
-                          <Icon name="zap" size={14} className="text-amber-500" /> Racha: 12 d&iacute;as
+                          <Zap size={14} className="text-amber-500" /> Racha: 12 d&iacute;as
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Lo que incluye el plan */}
                     <div className="bg-white rounded-[2rem] shadow-sm border p-8 flex flex-col">
                       <h3 className="font-black text-lg mb-6 flex items-center gap-2">
-                        <Icon name="credit-card" size={20} className="text-indigo-600" /> Detalles del Plan
+                        <CreditCard size={20} className="text-indigo-600" /> Detalles del Plan
                       </h3>
                       <div className="space-y-4 flex-1">
                         {[
@@ -404,7 +363,7 @@
                         ].map((item, i) => (
                           <div key={i} className="flex items-center gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                              <Icon name="check-circle-2" size={12} />
+                              <CheckCircle2 size={12} />
                             </div>
                             <span className="text-sm font-semibold text-slate-600">{item}</span>
                           </div>
@@ -415,12 +374,13 @@
                       </button>
                     </div>
 
+                    {/* Perfil generado por IA */}
                     <div className="bg-indigo-900 rounded-[2rem] shadow-xl p-8 text-white flex flex-col relative overflow-hidden group">
                       <div className="absolute -top-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                         <Icon name="sparkles" size={200} />
+                         <Sparkles size={200} />
                       </div>
                       <h3 className="font-black text-lg mb-4 flex items-center gap-2">
-                        <Icon name="sparkles" size={20} className="text-amber-400" /> Perfil Bio-Inteligente
+                        <Sparkles size={20} className="text-amber-400" /> Perfil Bio-Inteligente
                       </h3>
                       <p className="text-indigo-200 text-sm mb-6 leading-relaxed">
                         Nuestra IA ha analizado tus 3 meses de progreso. Tienes un perfil tipo <b>"Endo-Mesomorfo"</b> con alta capacidad de recuperaci&oacute;n.
@@ -434,21 +394,22 @@
                         </div>
                       </div>
                       <button className="w-full py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                        Ver Informe Completo IA <Icon name="chevron-right" size={16} />
+                        Ver Informe Completo IA <ChevronRight size={16} />
                       </button>
                     </div>
                   </div>
 
+                  {/* Ajustes de la aplicacion */}
                   <div className="bg-white rounded-[2rem] shadow-sm border p-8">
                     <h3 className="font-black text-lg mb-6 flex items-center gap-2">
-                      <Icon name="settings" size={20} className="text-indigo-600" /> Ajustes de Aplicaci&oacute;n
+                      <Settings size={20} className="text-indigo-600" /> Ajustes de Aplicaci&oacute;n
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                      <SettingsToggle label="Notificaciones Push" icon="bell" active />
-                      <SettingsToggle label="Modo Oscuro Autom\u00e1tico" icon="smartphone" />
-                      <SettingsToggle label="Sincronizar Salud (Apple/Google)" icon="activity" active />
-                      <SettingsToggle label="Idioma" value="Espa\u00f1ol (ES)" icon="globe" />
-                      <SettingsToggle label="Autenticaci\u00f3n Biom\u00e9trica" icon="lock" active />
+                      <SettingsToggle label="Notificaciones Push" icon={<Bell size={18}/>} active />
+                      <SettingsToggle label="Modo Oscuro Autom\u00e1tico" icon={<Smartphone size={18}/>} />
+                      <SettingsToggle label="Sincronizar Salud (Apple/Google)" icon={<Activity size={18}/>} active />
+                      <SettingsToggle label="Idioma" value="Espa\u00f1ol (ES)" icon={<Globe size={18}/>} />
+                      <SettingsToggle label="Autenticaci\u00f3n Biom\u00e9trica" icon={<Lock size={18}/>} active />
                     </div>
                   </div>
                 </div>
@@ -472,10 +433,10 @@
           </div>
 
           <footer className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-40 shadow-lg">
-            <NavIcon active={activeTab === 'home'} icon="home" label="Inicio" onClick={() => setActiveTab('home')} />
-            <NavIcon active={activeTab === 'calendar'} icon="calendar" label="Agenda" onClick={() => setActiveTab('calendar')} />
-            <NavIcon active={activeTab === 'messages'} icon="message-circle" label="Chat" onClick={() => setActiveTab('messages')} />
-            <NavIcon active={activeTab === 'profile'} icon="user" label="Perfil" onClick={() => setActiveTab('profile')} />
+            <NavIcon active={activeTab === 'home'} icon={<Home />} label="Inicio" onClick={() => setActiveTab('home')} />
+            <NavIcon active={activeTab === 'calendar'} icon={<Calendar />} label="Agenda" onClick={() => setActiveTab('calendar')} />
+            <NavIcon active={activeTab === 'messages'} icon={<MessageCircle />} label="Chat" onClick={() => setActiveTab('messages')} />
+            <NavIcon active={activeTab === 'profile'} icon={<User />} label="Perfil" onClick={() => setActiveTab('profile')} />
           </footer>
         </div>
       );
@@ -486,12 +447,12 @@
     const SettingsToggle = ({ label, icon, active = false, value = null }) => (
       <div className="flex items-center justify-between py-4 border-b border-slate-50 last:border-0 group">
         <div className="flex items-center gap-3">
-          <div className="text-slate-400 group-hover:text-indigo-600 transition-colors"><Icon name={icon} size={18} /></div>
+          <div className="text-slate-400 group-hover:text-indigo-600 transition-colors">{icon}</div>
           <span className="text-sm font-bold text-slate-700">{label}</span>
         </div>
         {value ? (
           <div className="flex items-center gap-1 text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg cursor-pointer">
-            {value} <Icon name="chevron-down" size={14} />
+            {value} <ChevronDown size={14} />
           </div>
         ) : (
           <div className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${active ? 'bg-indigo-600' : 'bg-slate-200'}`}>
@@ -503,13 +464,13 @@
 
     const NavItem = ({ active, icon, label, onClick }) => (
       <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 ${active ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}>
-        <Icon name={icon} size={20} /> <span className="text-sm">{label}</span>
+        {icon} <span className="text-sm">{label}</span>
       </button>
     );
 
     const NavIcon = ({ active, icon, label, onClick }) => (
       <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 transition-all ${active ? 'text-indigo-600 scale-110' : 'text-slate-400'}`}>
-        <Icon name={icon} size={24} />
+        {React.cloneElement(icon, { size: 24 })}
         <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
       </button>
     );
@@ -523,9 +484,9 @@
       const c = colorMap[plan.color] || colorMap.blue;
       return (
         <div onClick={onClick} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm cursor-pointer relative overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl hover:border-indigo-200 group">
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="external-link" size={16} className="text-indigo-400" /></div>
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><ExternalLink size={16} className="text-indigo-400" /></div>
           <div className={`w-12 h-12 rounded-2xl ${c.bg} flex items-center justify-center ${c.text} mb-4 group-hover:scale-110 transition-transform`}>
-            {plan.type === 'training' ? <Icon name="dumbbell" size={24} /> : <Icon name="apple" size={24} />}
+            {plan.type === 'training' ? <Dumbbell size={24} /> : <Apple size={24} />}
           </div>
           <h3 className="font-bold text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">{plan.title}</h3>
           <div className="w-full bg-slate-100 h-2 rounded-full mt-4 overflow-hidden">
@@ -544,7 +505,7 @@
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{category}</p>
         </div>
         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${active ? 'border-indigo-600 bg-white text-indigo-600' : 'border-slate-200 text-transparent'}`}>
-          <Icon name="check-circle-2" size={14} />
+          <CheckCircle2 size={14} />
         </div>
       </div>
     );

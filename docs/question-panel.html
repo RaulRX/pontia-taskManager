@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitnessHub - Evaluación IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .anim-fade { animation: fadeIn 0.4s ease-out; }
+    .anim-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .chat-container { height: calc(100vh - 280px); }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .option-btn { transition: all 0.2s ease; border: 2px solid #f1f5f9; }
+    .option-btn:hover { border-color: #e2e8f0; transform: translateY(-1px); }
+    .option-btn.active { border-color: #4f46e5; background-color: #f5f3ff; color: #4f46e5; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- ICONOS SVG ---
+    const Icon = ({ name, size = 24, className = "" }) => {
+      const icons = {
+        shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />,
+        chevronRight: <polyline points="9 18 15 12 9 6" />,
+        chevronLeft: <polyline points="15 18 9 12 15 6" />,
+        edit: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />,
+        check: <polyline points="20 6 9 17 4 12" />,
+        sparkles: <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z" />,
+        activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2" />,
+        lock: (
+          <>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </>
+        )
+      };
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {icons[name] || null}
+        </svg>
+      );
+    };
+
+    // --- LAS 10 PREGUNTAS DEL DOCUMENTO ---
+    const QUESTIONS = [
+      { id: 1, title: "Biometría", text: "Hola {name}, para empezar, ¿cuál es tu edad, peso y altura actual? ¿Cómo describirías tu composición actual?", options: ["Poco músculo / Mucha grasa", "Atlético / Poco músculo", "Mucho músculo / Grasa moderada"] },
+      { id: 2, title: "Objetivo", text: "¿Qué quieres lograr prioritariamente y en cuánto tiempo te gustaría notar el primer cambio real?", options: ["Perder Grasa", "Ganar Músculo", "Mejorar Rendimiento"] },
+      { id: 3, title: "Actividad (NEAT)", text: "¿A qué te dedicas y cómo es tu movimiento diario (desde que despiertas hasta que entrenas)?", options: ["Sedentario (Oficina)", "Activo (Caminas mucho)", "Muy físico (Esfuerzo)"] },
+      { id: 4, title: "Nutrición", text: "¿Cuántas veces comes al día y cuáles son esos alimentos que se te escapan por ansiedad?", options: ["Comidas fijas (3-4)", "Picoteo constante", "Ayuno Intermitente"] },
+      { id: 5, title: "Salud", text: "¿Tienes alguna patología, lesión o tomas medicación que deba tener en cuenta?", options: ["Lesión articular", "Patología metabólica", "Ninguna / Saludable"] },
+      { id: 6, title: "Experiencia", text: "¿Cuánto tiempo llevas entrenando en serio y con qué material cuentas habitualmente?", options: ["Principiante (0-1 año)", "Intermedio (1-3 años)", "Avanzado (+3 años)"] },
+      { id: 7, title: "Psicología", text: "¿Has seguido dietas restrictivas antes o tienes una relación estresante con la báscula?", options: ["Sí, historial de dietas", "No, relación sana", "A veces me obsesiono"] },
+      { id: 8, title: "Estrés Vital", text: "En una escala del 1 al 10, ¿cómo es tu nivel de estrés diario (trabajo, familia, etc)?", options: ["Bajo (1-3)", "Moderado (4-7)", "Alto (8-10)"] },
+      { id: 9, title: "Sueño", text: "¿Cuántas horas duermes de media y cómo calificarías la calidad de tu descanso?", options: ["Duermo poco (<6h)", "Normal (7-8h)", "Mucha calidad"] },
+      { id: 10, title: "Adherencia", text: "Si dejaste planes anteriores, ¿cuál fue el motivo principal? ¿Qué te motiva hoy?", options: ["Falta de tiempo", "Dieta aburrida", "Falta de resultados"] }
+    ];
+
+    const App = () => {
+      const [step, setStep] = useState('welcome'); 
+      const [name, setName] = useState('');
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [answers, setAnswers] = useState(new Array(QUESTIONS.length).fill(null));
+      const [selectedOption, setSelectedOption] = useState(null);
+      const [detailText, setDetailText] = useState('');
+      const chatEndRef = useRef(null);
+
+      useEffect(() => {
+        if (step === 'chat') {
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          if (answers[currentIndex]) {
+            setSelectedOption(answers[currentIndex].option);
+            setDetailText(answers[currentIndex].detail || '');
+          } else {
+            setSelectedOption(null);
+            setDetailText('');
+          }
+        }
+      }, [currentIndex, step]);
+
+      const onNext = (e) => {
+        if(e) e.preventDefault();
+        if (!selectedOption) return;
+        
+        const newAnswers = [...answers];
+        newAnswers[currentIndex] = { option: selectedOption, detail: detailText };
+        setAnswers(newAnswers);
+        
+        if (currentIndex < QUESTIONS.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          setStep('summary');
+        }
+      };
+
+      const goToStep = (index) => {
+        // Permitimos navegar a cualquier paso ya respondido o al siguiente pendiente
+        const firstUnanswered = answers.findIndex(a => a === null);
+        if (index <= (firstUnanswered === -1 ? QUESTIONS.length - 1 : firstUnanswered)) {
+          setCurrentIndex(index);
+          setStep('chat');
+        }
+      };
+
+      if (step === 'welcome') {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 anim-fade">
+            <div className="max-w-md w-full bg-white rounded-[3rem] shadow-xl p-12 text-center space-y-8 border border-slate-100">
+              <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mx-auto shadow-2xl shadow-indigo-100">
+                <Icon name="activity" size={36} />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">FitnessHub IA</h1>
+                <p className="text-slate-500 text-sm">Configura tu motor de entrenamiento inteligente.</p>
+              </div>
+              <form onSubmit={(e) => { e.preventDefault(); if(name) setStep('chat'); }} className="space-y-4">
+                <input 
+                  type="text" 
+                  placeholder="Tu nombre aquí..." 
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-center font-bold text-slate-700 focus:border-indigo-500 focus:outline-none transition-all"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2">
+                  Empezar <Icon name="chevronRight" size={18} />
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      if (step === 'chat') {
+        return (
+          <div className="min-h-screen flex flex-col bg-white anim-fade">
+            <header className="border-b px-6 pt-8 pb-6 bg-white sticky top-0 z-20">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center justify-between mb-8 px-2">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                        <Icon name="shield" size={20} />
+                      </div>
+                      <div>
+                        <h2 className="font-black text-slate-800 text-sm uppercase tracking-wider">Protocolo de Análisis</h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Paso {currentIndex + 1} de {QUESTIONS.length}</p>
+                      </div>
+                   </div>
+                   <button onClick={() => setStep('welcome')} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                     <Icon name="chevronLeft" size={24} />
+                   </button>
+                </div>
+
+                <div className="relative flex items-center justify-between px-4">
+                  <div className="absolute left-0 right-0 h-[2px] bg-slate-100 -z-10 mx-8"></div>
+                  <div 
+                    className="absolute left-0 h-[2px] bg-indigo-600 -z-10 mx-8 transition-all duration-700 ease-out" 
+                    style={{ width: `${(currentIndex / (QUESTIONS.length - 1)) * 92}%` }}
+                  ></div>
+                  
+                  {QUESTIONS.map((q, i) => {
+                    const isCompleted = answers[i] !== null;
+                    const isCurrent = currentIndex === i;
+                    return (
+                      <button 
+                        key={q.id}
+                        onClick={() => goToStep(i)}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all duration-300 border-2 ${
+                          isCurrent 
+                            ? 'bg-white border-indigo-600 text-indigo-600 scale-125 shadow-xl z-10 ring-4 ring-indigo-50' 
+                            : isCompleted 
+                              ? 'bg-indigo-600 border-indigo-600 text-white' 
+                              : 'bg-white border-slate-200 text-slate-300 hover:border-slate-400'
+                        }`}
+                      >
+                        {isCompleted && !isCurrent ? <Icon name="check" size={12} /> : i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </header>
+
+            <main className="flex-1 overflow-y-auto p-6 chat-container custom-scrollbar space-y-10">
+              <div className="max-w-2xl mx-auto space-y-10">
+                <div className="space-y-4 anim-slide-up">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-indigo-600 flex-shrink-0 shadow-sm">
+                      <Icon name="activity" size={20} />
+                    </div>
+                    <div className="bg-white border border-slate-100 p-6 rounded-3xl rounded-tl-none text-[15px] text-slate-700 leading-relaxed font-medium shadow-sm">
+                      {QUESTIONS[currentIndex].text.replace('{name}', name)}
+                    </div>
+                  </div>
+                </div>
+
+                {answers[currentIndex] && (
+                   <div className="flex justify-end anim-fade">
+                      <div className="bg-indigo-600 text-white px-8 py-4 rounded-3xl rounded-tr-none text-sm font-bold shadow-lg shadow-indigo-100 flex items-center gap-3">
+                        {answers[currentIndex].option}
+                        <Icon name="check" size={14} />
+                      </div>
+                   </div>
+                )}
+                
+                <div ref={chatEndRef} className="h-4" />
+              </div>
+            </main>
+
+            <footer className="border-t p-8 bg-white">
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {QUESTIONS[currentIndex].options.map(opt => (
+                    <button 
+                      key={opt}
+                      onClick={() => setSelectedOption(opt)}
+                      className={`option-btn p-5 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center transition-all ${selectedOption === opt ? 'active shadow-lg' : 'bg-white text-slate-500 border-slate-100'}`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <form onSubmit={onNext} className="relative">
+                  <input 
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-[2rem] px-8 py-6 text-sm focus:border-indigo-500 focus:outline-none transition-all pr-40"
+                    placeholder="Detalles adicionales aquí..."
+                    value={detailText}
+                    onChange={(e) => setDetailText(e.target.value)}
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!selectedOption}
+                    className={`absolute right-3 top-3 bottom-3 px-8 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all ${selectedOption ? 'bg-slate-900 text-white shadow-xl hover:bg-indigo-600' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                  >
+                    {currentIndex === QUESTIONS.length - 1 ? 'Finalizar' : 'Continuar'} <Icon name="chevronRight" size={14} />
+                  </button>
+                </form>
+              </div>
+            </footer>
+          </div>
+        );
+      }
+
+      if (step === 'summary') {
+        return (
+          <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center anim-fade">
+            <div className="max-w-3xl w-full bg-white rounded-[3.5rem] shadow-2xl p-12 space-y-10 border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                <Icon name="sparkles" size={240} />
+              </div>
+              
+              <div className="text-center space-y-3">
+                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4">
+                  <Icon name="check" size={40} />
+                </div>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Confirmación de Perfil</h2>
+                <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Hemos recopilado toda la información necesaria. Pulsa en cualquier sección si necesitas corregirla.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[45vh] overflow-y-auto custom-scrollbar pr-2">
+                {QUESTIONS.map((q, i) => (
+                  <div 
+                    key={i} 
+                    onClick={() => goToStep(i)}
+                    className="bg-slate-50 p-6 rounded-3xl border-2 border-transparent hover:border-indigo-300 hover:bg-white cursor-pointer transition-all group relative overflow-hidden"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-black text-slate-300 group-hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">{q.title}</span>
+                      <Icon name="edit" size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110" />
+                    </div>
+                    <p className="text-[15px] font-bold text-slate-700 leading-tight">{answers[i]?.option}</p>
+                    {answers[i]?.detail && (
+                      <div className="mt-3 pt-3 border-t border-slate-200/50">
+                        <p className="text-[11px] text-slate-400 font-medium italic line-clamp-2">"{answers[i].detail}"</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 flex flex-col gap-4">
+                <button className="w-full bg-indigo-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.15em] text-xs shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3">
+                  Generar Mi Plan Inteligente <Icon name="sparkles" size={20} />
+                </button>
+                <p className="text-center text-[10px] text-slate-300 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                  <Icon name="lock" size={10} /> Datos encriptados para tu privacidad
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
