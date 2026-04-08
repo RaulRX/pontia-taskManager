@@ -63,12 +63,17 @@ class Postgres_Initializer(Db_initializer):
 
     def __init__(self, database_path: str):
         super().__init__(database_path)
-        HOST = os.getenv("POSTGRES_HOST")
-        USER = os.getenv("POSTGRES_USER")
-        PASSWORD = os.getenv("POSTGRES_PASSWORD")
-        PORT = os.getenv("POSTGRES_PORT")
-        DB = os.getenv("POSTGRES_DB")
         try:
+            host_file = os.environ.get("POSTGRES_HOST", "")
+            user_file = os.environ.get("POSTGRES_USER", "")
+            password_file = os.environ.get("POSTGRES_PASSWORD", "")
+            database_file = os.environ.get("POSTGRES_DB", "")
+        
+            HOST = open(host_file, 'r').read()
+            USER = open(user_file, 'r').read()
+            PASSWORD = open(password_file, 'r').read()
+            PORT = os.getenv("POSTGRES_PORT", 5432)
+            DB = open(database_file, 'r').read()
             self.__connection = psycopg2.connect(
                 database=DB,
                 host=HOST,
@@ -79,6 +84,12 @@ class Postgres_Initializer(Db_initializer):
             logger.info("PostgreSQL connection established (host=%s, db=%s)", HOST, DB)
         except psycopg2.OperationalError as e:
             logger.error("Failed to connect to PostgreSQL (host=%s, db=%s): %s", HOST, DB, e)
+            raise
+        except FileNotFoundError:
+            logger.error(f"El fichero no existe")
+            raise
+        except OSError as e:
+            logger.error('open() failed', e)
             raise
 
         self.__session = None
