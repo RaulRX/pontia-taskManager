@@ -4,6 +4,7 @@ venv
 .claude
 .env
 .gitignore
+env/**
 
 *.py[cod]
 *$py.class
