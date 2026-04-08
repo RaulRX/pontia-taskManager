@@ -3,6 +3,7 @@ __pycache__
 **/*.db
 .claude
 .env
+env/**
 
 *.py[cod]
 *$py.class

@@ -1,8 +1,12 @@
 services:
   postgres:
     container_name: postgresDB
-    image: postgres:14.22-trixie
+    image: postgres:15-alpine
     restart: unless-stopped
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_database
     environment:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
@@ -23,14 +27,16 @@ services:
   
   taskmanager:
     container_name: task-manager
-    image: rul0x/taskmanager:latest
+    build: 
+      context: ../
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     secrets:
-      - postgres_password
       - postgres_user
+      - postgres_password
       - postgres_host
       - postgres_database
     environment:
@@ -39,12 +45,14 @@ services:
       POSTGRES_PASSWORD: /run/secrets/postgres_password
       POSTGRES_PORT: 5432
       POSTGRES_DB: /run/secrets/postgres_database
-      POSTGRES_DB_TABLE: Notes
+      POSTGRES_DB_TABLE: Note
       LOG_LEVEL: info
     ports:
       - 8080:8000
     networks:
       - net-taskmanager
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
     
 volumes:
   postgres_db:
@@ -53,11 +61,11 @@ networks:
   net-taskmanager:
 
 secrets:
-  postgres-password:
-    file: ../src/taskmanager/infrastructure/env/postgres_password.txt
-  postgres_user: 
+  postgres_user:
     file: ../src/taskmanager/infrastructure/env/postgres_user.txt
-  postgres_host: 
+  postgres_password:
+    file: ../src/taskmanager/infrastructure/env/postgres_password.txt
+  postgres_host:
     file: ../src/taskmanager/infrastructure/env/postgres_host.txt
-  postgres_database: 
+  postgres_database:
     file: ../src/taskmanager/infrastructure/env/postgres_database.txt
