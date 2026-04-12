@@ -1,0 +1,14 @@
+name: Workflow Manual
+on:
+  workflow_dispatch:
+    inputs:
+      nombre:
+        description: 'Indica tu nombre'
+        required: true
+        default: 'Raúl'
+jobs:
+  saludo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Saludo personalizado
+        run: echo "Hola, ${{ github.event.inputs.nombre }}!"

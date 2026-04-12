@@ -1,0 +1,46 @@
+name: Notificar Discord
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  show_push_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print push data
+        env:
+          COMMIT_AUTHOR: ${{ github.actor }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          COMMIT_DATE: ${{ github.event.head_commit.timestamp }}
+        run: |
+          echo "Usuario que ha comiteado: $COMMIT_AUTHOR"
+          echo "Mensaje en el commit: $COMMIT_MESSAGE"
+          echo "Url del commit: $COMMIT_URL"
+          echo "Fecha y hora del commit: $COMMIT_DATE"
+  general_notification:
+    runs-on: ubuntu-latest
+    needs: show_push_data
+    steps:
+      - name: Enviar mensaje a Discord - General 
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_DISCORD_GENERAL }}
+          COMMIT_AUTHOR: ${{ github.actor }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          COMMIT_DATE: ${{ github.event.head_commit.timestamp }}
+        run: |
+          # Construir JSON usando jq para que sea válido
+          JSON=$(jq -n \
+            --arg author "$COMMIT_AUTHOR" \
+            --arg message "$COMMIT_MESSAGE" \
+            --arg url "$COMMIT_URL" \
+            --arg date "$COMMIT_DATE" \
+            '{content: "**Nuevo push por \($author)**\n**Mensaje:** \($message)\n**Fecha y hora del commit:** \($date)\n**Commit URL:** \($url)"}'
+          )
+          echo "webhook ejecutado"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$JSON" \
+               $WEBHOOK_URL
