@@ -36,13 +36,4 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
         run: |
           export PYTHONPATH="$PYTHONPATH:$WORKSPACE/src"
-
-          # Check if pytest is installed
-          if $(python -c "import pytest" | echo $?) == 0; then
-            echo "pytest is installed"
-          
-            else
-            echo "pytest is not installed. Proceeding to install ..."
-            pip install pytest
-          
           pytest tests/test_operations.py
