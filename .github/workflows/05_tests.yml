@@ -21,13 +21,15 @@ jobs:
         run: |
           pip install -r ./requirements.txt
            # Check if pytest is installed
-          if $(python -c "import pytest" | echo $?) == 0; then
+          if $(python -c "import pytest" 2> /dev/null | echo $?) == 0; then
             echo "pytest is installed"
-          
           else
             echo "pytest is not installed. Proceeding to install ..."
             pip install pytest
           fi
+
+          # check pytest installation
+          echo "Pytest version: $(pytest --version)" 
       
       - name: Ejecutar tests
         env:
