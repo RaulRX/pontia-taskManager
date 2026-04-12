@@ -21,19 +21,16 @@ jobs:
         run: |
           pip install -r ./requirements.txt
            # Check if pytest is installed
-          if $(python -c "import pytest" 2> /dev/null | echo $?) == 0; then
-            echo "pytest is installed"
-          else
-            echo "pytest is not installed. Proceeding to install ..."
-            pip install pytest
-          fi
-
-          # check pytest installation
-          echo "Pytest version: $(pytest --version)" 
       
       - name: Ejecutar tests
         env:
           WORKSPACE: ${{ github.workspace }}
         run: |
           export PYTHONPATH="$PYTHONPATH:$WORKSPACE/src"
-          pytest tests/test_operations.py
+          # Terminal 1: levantar la API
+          echo "Levantamos la API para ejecutar los tests"
+          python -m src.taskmanager.main
+
+          # Terminal 2: ejecutar tests
+          echo "Ejecutamos los tests"
+          python -m tests.test_python
