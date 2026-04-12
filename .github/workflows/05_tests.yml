@@ -1,0 +1,28 @@
+name: Tests (Python)
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Show github repo
+        run: echo "La carpeta de trabajo es $GITHUB_WORKSPACE"
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Instalar dependencias
+        run: pip install -r config/requirements.txt
+      
+      - name: Ejecutar tests
+        env:
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          export PYTHONPATH="$PYTHONPATH:$WORKSPACE/src"
+          pytest tests/test_operations.py
