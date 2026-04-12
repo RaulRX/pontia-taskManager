@@ -18,20 +18,20 @@ jobs:
           python-version: '3.x'
       
       - name: Instalar dependencias
-        run: pip install -r ./requirements.txt
+        run: |
+          pip install -r ./requirements.txt
+           # Check if pytest is installed
+          if $(python -c "import pytest" | echo $?) == 0; then
+            echo "pytest is installed"
+          
+          else
+            echo "pytest is not installed. Proceeding to install ..."
+            pip install pytest
+          fi
       
       - name: Ejecutar tests
         env:
           WORKSPACE: ${{ github.workspace }}
         run: |
           export PYTHONPATH="$PYTHONPATH:$WORKSPACE/src"
-
-          # Check if pytest is installed
-          if $(python -c "import pytest" | echo $?) == 0; then
-            echo "pytest is installed"
-          
-            else
-            echo "pytest is not installed. Proceeding to install ..."
-            pip install pytest
-          
           pytest tests/test_operations.py
