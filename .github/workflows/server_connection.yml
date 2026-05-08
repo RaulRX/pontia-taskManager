@@ -7,22 +7,11 @@ jobs:
   connect:
     runs-on: ubuntu-latest
     steps:
-      - name: verify secrets format
-        run: |
-          echo "TFM_SERVER_HOST prefix: $(echo '${{ secrets.TFM_SERVER_HOST }}' | cut -c1-5)"
-          echo "TFM_SERVER_PKEY prefix: $(echo '${{ secrets.TFM_SERVER_PKEY }}' | cut -c1-5)"
-          if [ -n '${{ secrets.TFM_SERVER_USER }}' ]; then 
-            echo "TFM_SERVER_USER: has content"; 
-          else 
-            echo "TFM_SERVER_USER: empty or not set"; 
-          fi
-
       - name: show docker images
-        uses: appleboy/ssh-action@v1
+        uses: JimCronqvist/action-ssh@1.0.0
         with:
-          host: ${{ secrets.TFM_SERVER_HOST }}
-          key: ${{ secrets.TFM_SERVER_PKEY }}
-          script: |
-            docker images
+          hosts: ${{ secrets.TFM_SERVER_USER }}@${{ secrets.TFM_SERVER_HOST }}
+          privateKey: ${{ secrets.TFM_SERVER_PKEY }}
+          command: docker images
   
           
