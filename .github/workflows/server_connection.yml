@@ -12,7 +12,7 @@ jobs:
         with:
           hosts: ${{ secrets.TFM_SERVER_USER }}@${{ secrets.TFM_SERVER_HOST }}
           privateKey: ${{ secrets.TFM_SERVER_PKEY }}
-          debug: false
+          debug: true
           command: docker images
   
           
