@@ -18,11 +18,10 @@ jobs:
           fi
 
       - name: show docker images
-        uses: appleboy/ssh-action@v1
+        uses: JimCronqvist/action-ssh@1.0.0
         with:
-          host: ${{ secrets.TFM_SERVER_HOST }}
-          key: ${{ secrets.TFM_SERVER_PKEY }}
-          script: |
-            docker images
+          hosts: ${{ secrets.TFM_SERVER_USER }}@${{ secrets.TFM_SERVER_HOST }}
+          privateKey: ${{ secrets.TFM_SERVER_PKEY }}
+          command: docker images
   
           
