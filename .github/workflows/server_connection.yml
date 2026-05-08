@@ -7,12 +7,19 @@ jobs:
   connect:
     runs-on: ubuntu-latest
     steps:
+      - name: verify secrets format
+        run: |
+          echo "TFM_SERVER_HOST prefix: $(echo '${{ secrets.TFM_SERVER_HOST }}' | cut -c1-5)"
+          echo "TFM_SERVER_PKEY prefix: $(echo '${{ secrets.TFM_SERVER_PKEY }}' | cut -c1-5)"
+
       - name: show docker images
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.TFM_SERVER_HOST }}
           key: ${{ secrets.TFM_SERVER_PKEY }}
+          username: ${{ secrets.TFM_SERVER_USER }}
           script: |
+            echo ""
             docker images
   
           
