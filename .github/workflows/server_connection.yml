@@ -1,0 +1,18 @@
+name: Test server connection
+
+on:
+  workflow_dispatch:
+   
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: show docker images
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.TFM_SERVER_HOST }}
+          key: ${{ secrets.TFM_SERVER_PKEY }}
+          script: |
+            docker images
+  
+          
