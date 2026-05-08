@@ -22,9 +22,7 @@ jobs:
         with:
           host: ${{ secrets.TFM_SERVER_HOST }}
           key: ${{ secrets.TFM_SERVER_PKEY }}
-          username: ${{ secrets.TFM_SERVER_USER }}
           script: |
-            echo ""
             docker images
   
           
